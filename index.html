@@ -3,7 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<style>[hidden]{display:none!important} body{margin:0} img{max-width:100%}</style>
+</head>
+<body>
+</head><body>
 <title>Draft Pick MLBB</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
 <style>
@@ -175,10 +181,15 @@ button.pslot:hover{border-color:var(--turn)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:6px;max-height:520px;overflow-y:auto;padding:2px}
 .filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .search{flex:1 1 200px;min-width:0;border:1px solid var(--line);background:var(--sunk);border-radius:6px;padding:8px 10px}
+.mic{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:7px 11px;font-weight:600;font-size:14px}
+.mic svg{width:16px;height:16px;fill:currentColor}
+.mic.live{border-color:var(--red);color:var(--red);animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 4px var(--red-soft)}}
 .voicebar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;background:var(--turn-soft);border:1px solid var(--turn);border-radius:8px;padding:7px 9px}
 .voicebar .vh{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px 3px 4px;font-weight:600}
 .voicebar .vh:disabled{opacity:.45;text-decoration:line-through;cursor:default}
 .voicebar .vh .mono{width:22px;height:22px;font-size:10px;border-radius:50%}
+.voicemsg{font-size:12.5px;color:var(--muted)}
 .chips{display:flex;flex-wrap:wrap;gap:5px}
 .chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:600;color:var(--muted)}
 .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
@@ -217,9 +228,7 @@ button.pslot:hover{border-color:var(--turn)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
-<style>[hidden]{display:none!important} body{margin:0} img{max-width:100%}</style>
-</head>
-<body>
+
 <div class="wrap">
   <header class="top">
     <h1><small>Asisten draft · ranked &amp; turnamen</small>Draft Pick MLBB</h1>
@@ -241,7 +250,7 @@ button.pslot:hover{border-color:var(--turn)}
     <span><i class="pb n">▼</i> Nerf</span>
     <span><i class="pb a">∿</i> Disesuaikan / rework</span>
     <span><i class="tier S">S</i><i class="tier">A</i> Tier meta</span>
-    <span class="src">Patch 2.2.16 (16 Sep 2026) &amp; 2.2.16a (14 Okt 2026) · tier Season 42, data 16 Okt 2026 dari <a href="https://mlbbhub.com/tier-list" target="_blank" rel="noopener">MLBBHub</a></span>
+    <span class="src">Skill hero dicek s.d. patch 2.2.16a (termasuk revamp Kaja, Masha, Bruno, Aulus, Eudora, Freya, Sora) · Patch 2.2.16 (16 Sep 2026) &amp; 2.2.16a (14 Okt 2026) · tier Season 42, data 16 Okt 2026 dari <a href="https://mlbbhub.com/tier-list" target="_blank" rel="noopener">MLBBHub</a></span>
   </div>
 
   <div class="banner" id="sampleBanner" hidden>Ini draft contoh. Tekan <b>Draft baru</b> untuk mulai dari nol, atau lanjutkan dari giliran sekarang.</div>
@@ -263,9 +272,11 @@ button.pslot:hover{border-color:var(--turn)}
     <section class="team B" id="teamB"></section>
     <section class="panel poolp">
       <div class="filters">
-        <input class="search" id="search" type="search" placeholder="Cari hero… bisa beberapa sekaligus, mis. &quot;hirara aulus eudora&quot;" autocomplete="off" enterkeyhint="search">
+        <input class="search" id="search" type="search" placeholder="Cari atau ucapkan hero… mis. &quot;hirara aulus eudora&quot;" autocomplete="off" enterkeyhint="search">
+        <button class="mic" id="mic" type="button" aria-pressed="false" title="Cari hero dengan suara"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg><span id="micTxt">Suara</span></button>
       </div>
       <div class="voicebar" id="voiceBar" hidden></div>
+      <div class="voicemsg" id="voiceMsg" hidden></div>
       <div class="chips" id="roleChips"></div>
       <div class="chips" id="laneChips"></div>
       <div class="grid" id="grid"></div>
@@ -298,43 +309,47 @@ const PATCH={
  Odette:['a','Disesuaikan 2.2.16'],Sun:['a','Disesuaikan 2.2.16'],Marcel:['a','Disesuaikan 2.2.16'],Kadita:['a','Disesuaikan 2.2.16'],Hylos:['a','Disesuaikan 2.2.16'],
  Zilong:['n','Nerf 2.2.16'],Melissa:['n','Nerf 2.2.16'],Miya:['n','Nerf 2.2.16'],Hanabi:['n','Nerf 2.2.16'],'Yi Sun-shin':['n','Nerf 2.2.16'],Paquito:['n','Nerf 2.2.16']
 };
-['Argus','Aldous','Lukas','Akai','Cici','Alpha','Kagura','Edith','Karina','Kaja'].forEach(n=>PATCH[n]=['b','Buff 2.2.16']);
+['Argus','Aldous','Lukas','Akai','Cici','Alpha','Kagura','Edith','Karina'].forEach(n=>PATCH[n]=['b','Buff 2.2.16']);
+PATCH.Kaja=['b','Buff 2.2.16. Revamp 2.1.95: ult kini lasso area (bukan suppress satu target), skill 2 terbang melewati dinding'];
+PATCH.Marcel=['a','Disesuaikan 2.2.16: bisa menggagalkan skill target-lokasi (mis. ult Eudora). Ult = zona stasis, musuh di dalam kebal damage'];
 // [tier, winrate %, banrate %]
 const META={Masha:['S',60.3,33],Aulus:['S',58.5,43.6],Marcel:['S',58.2,33.1],Rafaela:['S',57.9,19.1],Argus:['S',56.0],Minotaur:['S',55.0,7.9],Khufra:['S',54.7],'Popol and Kupa':['S',54.7],Gloo:['S',54.1,38.2],Floryn:['S',54.1],Valir:['S',53.9],Carmilla:['S',53.8,15.1],Obsidia:['S',53.7,20.9],
  Lolita:['A',54.0],Diggie:['A',53.6],Bruno:['A',53.3],Gord:['A',52.9],Lukas:['A',52.8,38],Hirara:['A',52.7,68.7],Estes:['A',52.7,43.2],Benedetta:['A',52.7],Edith:['A',52.6],Irithel:['A',52.5],Ling:['A',52.4],Sun:['A',52.4,21.4],Zhask:['A',52.3],Hanabi:['A',52.2],Atlas:['A',52.2],Belerick:['A',52.1,55.9],Barats:['A',51.9],Kagura:['A',51.8],Minsitthar:['A',51.6],Kadita:['A',51.3],Eudora:['A',51.2,58.8],Zetian:['A',51.0]};
 
-/* ---------- traits → counters ---------- */
+/* ---------- traits → counters (kit dicek s.d. patch 2.2.16a) ----------
+   m = banyak dash/lincah, h = sustain/heal, t = tebal, c = punya CC, u = ult channel bisa dibatalkan,
+   b = burst ke satu target, U = ult war besar, p = poke proyektil, d = pakai shield, s = backline tipis, i = backline tanpa dash */
 const TRAIT_LIST={
- m:'Fanny Ling Lancelot Gusion Hayabusa Joy Wanwan Benedetta Hirara Nolan Hanzo Karina Harley Alucard Chou Paquito Aamon Kagura Julian Suyou Arlott Cici Sora Guinevere Natalia Saber Helcurt Harith Mathilda Zilong Khaleed Freya Alpha Lapu-Lapu Yin Selena Martis Aulus',
- h:'Estes Floryn Rafaela Angela Esmeralda Uranus Alice Yu Zhong Ruby Thamuz Fredrinn Alucard Balmond Lukas Cici Kalea Masha X.Borg Terizla Arlott Hylos Aulus',
- t:'Tigreal Franco Minotaur Johnson Lolita Hylos Grock Atlas Khufra Belerick Gatotkaca Baxia Gloo Barats Uranus Edith Fredrinn Akai Hilda Marcel Chip Terizla Masha Esmeralda Carmilla',
- c:'Tigreal Atlas Lolita Khufra Franco Johnson Minotaur Chou Kaja Grock Gatotkaca Marcel Hylos Kalea Edith Ruby Akai Carmilla Barats Gloo Belerick',
+ m:'Fanny Ling Lancelot Gusion Hayabusa Joy Wanwan Benedetta Hirara Nolan Hanzo Karina Harley Alucard Chou Paquito Aamon Kagura Julian Suyou Arlott Cici Sora Guinevere Natalia Saber Helcurt Harith Mathilda Zilong Khaleed Freya Alpha Lapu-Lapu Yin Selena Martis Aulus Kaja Masha Bruno Obsidia Marcel',
+ h:'Estes Floryn Rafaela Angela Esmeralda Uranus Alice Yu Zhong Ruby Thamuz Fredrinn Alucard Balmond Lukas Cici Kalea Masha X.Borg Terizla Arlott Hylos Aulus Freya Kaja',
+ t:'Tigreal Franco Minotaur Johnson Lolita Hylos Grock Atlas Khufra Belerick Gatotkaca Baxia Gloo Barats Uranus Edith Fredrinn Akai Hilda Marcel Chip Terizla Masha Esmeralda Carmilla Sora',
+ c:'Tigreal Atlas Lolita Khufra Franco Johnson Minotaur Chou Kaja Grock Gatotkaca Marcel Hylos Kalea Edith Ruby Akai Carmilla Barats Gloo Belerick Sora Masha Hirara Freya Eudora Bruno',
  u:'Odette Pharsa Yve Chang\'e',
  b:'Gusion Karina Lancelot Saber Natalia Helcurt Hayabusa Aamon Selena Eudora Harley Hirara Nolan Joy Fanny Ling Hanzo Suyou',
- U:'Carmilla Belerick Atlas Tigreal Lolita Pharsa Odette Lunox Johnson Grock Gatotkaca Minotaur Khufra Aurora Yve Kagura Chou Kaja Franco Lylia Faramis Gord Xavier Vale Cecilion Novaria',
+ U:'Carmilla Belerick Atlas Tigreal Lolita Pharsa Odette Lunox Johnson Grock Gatotkaca Minotaur Khufra Aurora Yve Kagura Chou Kaja Franco Lylia Faramis Gord Xavier Vale Cecilion Novaria Marcel Sora',
  p:'Pharsa Lesley Granger Irithel Layla Moskov Brody Beatrix Kimmy Novaria Xavier Natan Melissa Miya Hanabi Bruno Clint Karrie Ixia Obsidia',
- d:'Angela Mathilda Johnson X.Borg Edith'
+ d:'Angela Mathilda Johnson X.Borg Edith Freya Marcel'
 };
 function splitNames(s){const multi=['Yu Zhong','Popol and Kupa','Yi Sun-shin','Luo Yi','X.Borg'];const out=[];multi.forEach(m=>{if(s.includes(m)){out.push(m);s=s.replace(m,' ')}});return out.concat(s.split(' ').filter(Boolean))}
 const TRAITS={};
 for(const[k,v] of Object.entries(TRAIT_LIST))splitNames(v).forEach(n=>{TRAITS[n]=(TRAITS[n]||'')+k});
 BASE.forEach(h=>{if((h.role==='Marksman'||h.role==='Mage')&&!h.roles.includes('Tank')&&!['Esmeralda','Alice'].includes(h.name))TRAITS[h.name]=(TRAITS[h.name]||'')+'s'});
 ['Estes','Floryn','Angela','Rafaela'].forEach(n=>TRAITS[n]+='s');
-// immobile backline: squishy carry without dash
+// backline tanpa dash: tipis dan tidak punya skill kabur
 Object.keys(TRAITS).forEach(n=>{const t=TRAITS[n];if(t.includes('s')&&!t.includes('m'))TRAITS[n]+='i'});
 
 const BY_TRAIT={
- m:[['Khufra','anti-dash, hentikan lompatannya'],['Minsitthar','ult anti-dash'],['Phoveus','ult mengejar setiap dash'],['Kaja','suppress, kunci di tempat'],['Saber','ult lock target'],['Chou','CC beruntun'],['Franco','hook & suppress'],['Eudora','stun instan saat dia masuk'],['Aurora','freeze & CC area'],['Clint','jaring memperlambat dash']],
- b:[['Nana','Molina mengubahnya jadi hewan saat masuk'],['Belerick','taunt memaksa dia memukul Belerick'],['Kaja','suppress sebelum dia burst'],['Khufra','CC area saat dia masuk'],['Diggie','ult selamatkan carry dari burst'],['Angela','shield & ult nempel ke carry'],['Chou','peel untuk carry']],
+ m:[['Khufra','anti-dash, hentikan lompatannya'],['Minsitthar','ult anti-dash'],['Phoveus','ult mengejar setiap dash'],['Obsidia','ult mengikat target, dia tidak bisa dash menjauh'],['Saber','ult lock target'],['Chou','CC beruntun'],['Franco','hook & suppress'],['Eudora','stun instan saat dia masuk'],['Aurora','freeze & CC area'],['Clint','jaring memperlambat dash']],
+ b:[['Nana','Molina mengubahnya jadi hewan saat masuk'],['Belerick','taunt memaksa dia memukul Belerick'],['Marcel','ult stasis membuat carry kebal sesaat'],['Khufra','CC area saat dia masuk'],['Diggie','ult selamatkan carry dari burst'],['Angela','shield & ult nempel ke carry'],['Chou','peel untuk carry']],
  h:[['Baxia','pasif anti-heal'],['Karrie','true damage % HP'],['Dyrroth','burst + kurangi armor']],
  t:[['Karrie','true damage % HP'],['Dyrroth','kurangi armor'],['Lunox','penetrasi magic tinggi'],['X.Borg','true damage dari Fire Missiles']],
- s:[['Saber','ult lock backline'],['Natalia','masuk diam-diam ke backline'],['Helcurt','silence + gelapkan peta'],['Lancelot','dive backline, sulit dikunci'],['Hayabusa','split push & pick-off'],['Karina','burst ke target tipis'],['Gusion','burst cepat dari mid'],['Harley','burst & kabur dari mid']],
- c:[['Diggie','ult purify satu tim'],['Valentina','salin ult CC-nya untuk balas engage'],['Martis','tahan CC saat skill'],['Valir','dorong & slow, jaga jarak']],
+ s:[['Saber','ult lock backline'],['Natalia','masuk diam-diam ke backline'],['Helcurt','silence + gelapkan peta'],['Lancelot','dive backline, sulit dikunci'],['Kaja','terbang lewati dinding lalu lasso backline'],['Hayabusa','split push & pick-off'],['Karina','burst ke target tipis'],['Gusion','burst cepat dari mid'],['Harley','burst & kabur dari mid']],
+ c:[['Diggie','ult purify satu tim'],['Valentina','salin ult CC-nya untuk balas engage'],['Martis','tahan CC saat skill'],['Aulus','Charge memberi kebal CC'],['Valir','dorong & slow, jaga jarak']],
  U:[['Valentina','salin ult-nya dan pakai balik ke tim lawan'],['Faramis','ult membangkitkan tim setelah kena combo ult'],['Lylia','ult memundurkan Lylia ke posisi aman sebelum combo'],['Diggie','ult purify membebaskan tim dari CC ult']],
  p:[['Lolita','perisai menahan semua proyektil'],['Natalia','sergap dari semak sebelum dia poke'],['Hayabusa','kejar poke yang diam di belakang']],
  d:[['Esmeralda','menyerap shield lawan jadi shield sendiri']],
- i:[['Franco','hook carry yang tidak punya dash'],['Kaja','tarik carry diam ke tengah tim'],['Natalia','sergap carry yang tidak bisa kabur']],
- u:[['Kaja','batalkan ult dengan suppress'],['Franco','hook batalkan ult'],['Eudora','stun instan'],['Chou','tendang keluar ult']]
+ i:[['Franco','hook carry yang tidak punya dash'],['Natalia','sergap carry yang tidak bisa kabur'],['Kaja','terbang masuk dan lasso carry yang tidak bisa kabur']],
+ u:[['Franco','hook batalkan ult'],['Eudora','stun instan'],['Chou','tendang keluar ult']]
 };
 const TIPS={
  U:'Jangan bergerombol saat ult-nya siap; pancing ult-nya keluar dulu baru war.',
@@ -348,14 +363,17 @@ const TIPS={
  u:'Simpan CC instan untuk membatalkan ult-nya.',
  s:'Kejar dia lebih dulu, damage tinggi tapi tipis.'
 };
+// matchup spesifik (kit terbaru)
 const CTR={
- Fanny:[['Khufra','anti-dash'],['Kaja','suppress'],['Saber','lock ult'],['Franco','hook & suppress']],
- Ling:[['Khufra','anti-dash'],['Kaja','suppress'],['Saber','lock ult'],['Chou','CC beruntun']],
- Lancelot:[['Khufra','anti-dash'],['Kaja','suppress'],['Chou','CC beruntun'],['Minsitthar','anti-dash']],
- Hanzo:[['Kaja','suppress tubuh asli'],['Franco','hook saat dia lengah'],['Chou','CC beruntun'],['Saber','lock ult']],
- Hirara:[['Kaja','suppress'],['Khufra','anti-dash'],['Saber','lock ult']],
- Aulus:[['Baxia','anti-heal'],['Karrie','true damage'],['Valir','kite & slow']],
- Masha:[['Karrie','true damage % HP'],['Baxia','anti-heal'],['Dyrroth','burst armor shred']],
+ Fanny:[['Khufra','anti-dash'],['Saber','lock ult'],['Franco','hook & suppress'],['Obsidia','ult mengikat, Fanny tidak bisa memakai kabel untuk kabur']],
+ Ling:[['Khufra','anti-dash'],['Saber','lock ult'],['Chou','CC beruntun'],['Minsitthar','anti-dash']],
+ Lancelot:[['Khufra','anti-dash'],['Chou','CC beruntun'],['Minsitthar','anti-dash'],['Saber','lock ult']],
+ Hanzo:[['Franco','hook saat dia lengah'],['Chou','CC beruntun'],['Saber','lock ult'],['Helcurt','burst tubuh asli']],
+ Hirara:[['Khufra','anti-dash'],['Saber','lock ult saat dia muncul lagi'],['Minsitthar','anti-dash'],['Chou','CC beruntun']],
+ Kaja:[['Diggie','ult purify lepas dari lasso Kaja'],['Valentina','salin lasso Kaja'],['Minsitthar','ult anti-dash menahan Kaja terbang masuk'],['Lylia','ult mundur keluar dari lasso']],
+ Marcel:[['Diggie','purify dari imobilisasi skill 1'],['Valentina','salin ult stasis Marcel'],['Baxia','anti-heal untuk shield pasifnya']],
+ Aulus:[['Baxia','anti-heal'],['Karrie','true damage'],['Valir','kite & slow sebelum Charge aktif']],
+ Masha:[['Karrie','true damage % HP, cepat habiskan 3 bar HP'],['Baxia','anti-heal'],['Dyrroth','burst armor shred']],
  Esmeralda:[['Dyrroth','burst & anti-shield'],['Karrie','true damage'],['Baxia','anti-heal']],
  Uranus:[['Karrie','true damage'],['Dyrroth','burst'],['Baxia','anti-heal']],
  Carmilla:[['Valentina','salin ult Carmilla, war jadi seimbang'],['Diggie','ult purify lepas dari rantai ult Carmilla'],['Faramis','bangkitkan tim yang tertarik ult Carmilla']],
@@ -364,10 +382,12 @@ const CTR={
  Tigreal:[['Valentina','salin ult Tigreal untuk balas combo'],['Diggie','anti-CC'],['Valir','dorong & slow']],
  Atlas:[['Valentina','salin ult Atlas, combo balik ke mereka'],['Diggie','anti-CC'],['Valir','dorong & slow']],
  Khufra:[['Diggie','anti-CC']],
- Aldous:[['Valir','kite & slow'],['Kaja','suppress']],
+ Aldous:[['Valir','kite & slow'],['Franco','hook sebelum dia ult dari jauh']],
  Alice:[['Baxia','anti-heal'],['Valir','kite & slow']],
  Kagura:[['Saber','lock ult'],['Hayabusa','dive cepat'],['Gusion','burst']],
- Odette:[['Valentina','salin ult Odette'],['Kaja','batalkan ult'],['Franco','hook batalkan ult'],['Chou','tendang keluar ult']],
+ Odette:[['Valentina','salin ult Odette'],['Franco','hook batalkan ult'],['Chou','tendang keluar ult']],
+ Eudora:[['Marcel','bisa menggagalkan ult Eudora sebelum kena'],['Diggie','selamatkan target combo']],
+ Vexana:[['Marcel','bisa menggagalkan skill 2 Vexana sebelum kena']],
  Estes:[['Baxia','anti-heal'],['Natalia','dive backline']],
  Rafaela:[['Baxia','anti-heal'],['Saber','lock ult']],
  Natalia:[['Chou','CC saat dia muncul'],['Diggie','selamatkan target']],
@@ -375,21 +395,34 @@ const CTR={
 };
 
 /* ---------- synergy ---------- */
-const AOE=new Set(['Odette','Pharsa','Vale','Yve','Aurora','Cecilion','Kadita','Vexana','Lylia','Luo Yi',"Chang'e",'Valentina','Novaria','Zhask','Gord']);
-const ENG=new Set(['Tigreal','Atlas','Lolita','Khufra','Franco','Johnson','Chou','Kaja','Grock','Gatotkaca','Marcel','Minotaur','Ruby','Edith','Fredrinn','Barats','Gloo','Hylos','Akai','Carmilla','Chip','Belerick']);
+const AOE=new Set(['Odette','Pharsa','Vale','Yve','Aurora','Cecilion','Kadita','Vexana','Lylia','Luo Yi',"Chang'e",'Valentina','Novaria','Zhask','Gord','Eudora']);
+// engager area: musuh terkumpul / tertahan beramai-ramai → cocok dengan ult area
+const ENG_AOE=new Set(['Tigreal','Atlas','Lolita','Khufra','Johnson','Kaja','Grock','Gatotkaca','Minotaur','Ruby','Edith','Fredrinn','Barats','Gloo','Hylos','Akai','Carmilla','Chip','Belerick','Sora']);
+// pengunci satu target → cocok dengan assassin burst satu target
+const ENG_ONE=new Set(['Franco','Chou','Masha','Saber']);
+const ENG=new Set([...ENG_AOE,...ENG_ONE]);
+const AOE_FIGHT=new Set(['Aulus','Yu Zhong','X.Borg','Arlott','Dyrroth','Freya','Paquito','Esmeralda','Lukas','Cici','Thamuz','Alucard','Balmond','Masha']);
 const HEALSUP=new Set(['Estes','Floryn','Rafaela','Angela','Kalea']);
 const PEEL=new Set(['Angela','Mathilda','Diggie']);
 function synergy(a,b){
-  if(ENG.has(a.name)&&AOE.has(b.name))return `${a.name} kumpulkan musuh, ${b.name} habisi dengan ult area`;
+  if(a.name===b.name)return null;
+  if(a.name==='Marcel'&&(tr(b.name).includes('b')||has(b,'Marksman')))return `Marcel bekukan sebagian musuh dengan ult, ${b.name} habisi sisanya`;
+  if(a.name==='Marcel')return null;
+  if(ENG_AOE.has(a.name)&&AOE.has(b.name))return `${a.name} menahan musuh beramai-ramai, ${b.name} habisi dengan skill area`;
+  if(ENG_AOE.has(a.name)&&AOE_FIGHT.has(b.name))return `${a.name} kumpulkan musuh, ${b.name} masuk dengan damage area`;
   if(a.name==='Johnson'&&(has(b,'Mage')||has(b,'Assassin')))return `${b.name} ikut naik mobil Johnson untuk ambush`;
   if(PEEL.has(a.name)&&(has(b,'Marksman')||has(b,'Assassin')))return `${a.name} melindungi dan menempel ke ${b.name}`;
   if(HEALSUP.has(a.name)&&(has(b,'Tank')||has(b,'Fighter')))return `${a.name} menambah sustain ${b.name} di depan`;
-  if(ENG.has(a.name)&&tr(b.name).includes('b'))return `${a.name} buka engage, ${b.name} langsung follow-up burst`;
-  if(ENG.has(a.name)&&has(b,'Fighter')&&tr(b.name).includes('m'))return `${a.name} kunci musuh, ${b.name} masuk menyusul`;
+  if(ENG_ONE.has(a.name)&&tr(b.name).includes('b'))return `${a.name} kunci satu target, ${b.name} langsung burst`;
+  if(ENG_AOE.has(a.name)&&has(b,'Fighter')&&tr(b.name).includes('m'))return `${a.name} tahan musuh, ${b.name} masuk menyusul`;
   if(HEALSUP.has(a.name)&&has(b,'Marksman'))return `${a.name} menjaga sustain ${b.name} saat war`;
   if((has(a,'Tank')||a.role==='Support')&&a.lanes.includes('R')&&has(b,'Marksman')&&!PEEL.has(a.name)&&!HEALSUP.has(a.name))return `${a.name} jadi tameng depan untuk ${b.name}`;
-  if(AOE.has(a.name)&&AOE.has(b.name))return null;
-  if(has(a,'Mage')&&tr(a.name).includes('s')&&ENG.has(b.name))return null;
+  return null;
+}
+// kombinasi yang justru saling mengganggu
+function antiSynergy(a,b){
+  if(a.name==='Marcel'&&AOE.has(b.name))return `ult Marcel membuat musuh kebal damage, jangan ditimpa ult area ${b.name}`;
+  if(a.name==='Marcel'&&ENG_AOE.has(b.name))return `ult stasis Marcel dan engage ${b.name} saling tumpang tindih, atur urutannya`;
   return null;
 }
 
@@ -514,6 +547,7 @@ function pickScore(h,team,lane){
   foe.forEach(e=>{const c=counters(e.name,h.name);if(c){s-=2.5;why.push(['neg','Di-counter '+e.name+' ('+c.w+')'])}});
   if(lane){if(h.lanes.includes(lane)){s+=3}else{s-=3;why.push(['neg','Jarang di '+LANE_FULL[lane]])}}
   mine.forEach(m=>{const r=synergy(m.h,h)||synergy(h,m.h);if(r){s+=1.5;why.push(['syn','Sinergi: '+r])}});
+  mine.forEach(m=>{const r=antiSynergy(m.h,h)||antiSynergy(h,m.h);if(r){s-=1.5;why.push(['neg','Kurang cocok: '+r])}});
   const front=mine.some(p=>isFront(p.h,p.lane));
   if(!front&&mine.length>=2&&isFront(h,lane)){s+=1.5;why.push(['','Tim butuh frontliner'])}
   if(mine.length>=2&&!mine.some(p=>has(p.h,'Mage'))&&has(h,'Mage')){s+=1.5;why.push(['','Tambah damage magic'])}
@@ -712,7 +746,7 @@ function renderRecs(){
 }
 
 /* ---------- render: pool ---------- */
-/* ---------- fuzzy hero search (tahan salah ketik, bisa banyak hero sekaligus) ---------- */
+/* ---------- voice / fuzzy hero search ---------- */
 const norm=t=>t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
 const ALIAS={yss:'Yi Sun-shin',yisunsin:'Yi Sun-shin',popol:'Popol and Kupa',kupa:'Popol and Kupa',popoldankupa:'Popol and Kupa',xborg:'X.Borg',eksborg:'X.Borg',change:"Chang'e",cange:"Chang'e",lapu:'Lapu-Lapu',gatot:'Gatotkaca',bene:'Benedetta',esme:'Esmeralda',yuzong:'Yu Zhong',yujong:'Yu Zhong',karmila:'Carmilla',kamila:'Carmilla',beleric:'Belerick',belerik:'Belerick',valen:'Valentina',tamuz:'Thamuz',tamus:'Thamuz',fredin:'Fredrinn',kufra:'Khufra',minsitar:'Minsitthar',mino:'Minotaur',haya:'Hayabusa',guin:'Guinevere',dirot:'Dyrroth',dirrot:'Dyrroth',harit:'Harith',marsel:'Marcel',odet:'Odette',farmis:'Faramis',franko:'Franco',tigrel:'Tigreal',tigril:'Tigreal',grok:'Grock',kaja:'Kaja',kaya:'Kaja',lansalot:'Lancelot',lanselot:'Lancelot',lance:'Lancelot',gusen:'Gusion',gusiyon:'Gusion',fani:'Fanny',leomor:'Leomord',luoi:'Luo Yi',luoyi:'Luo Yi',paqito:'Paquito',pakito:'Paquito',fovius:'Phoveus',foveus:'Phoveus',silvana:'Silvanna',terisla:'Terizla',wanwan:'Wanwan',wan:'Wanwan',bruno:'Bruno',klaud:'Claude',klod:'Claude',kerri:'Karrie',kari:'Karrie',iksia:'Ixia',obsidian:'Obsidia',zetiyan:'Zetian',suyu:'Suyou',cici:'Cici',sisi:'Cici',hirarah:'Hirara',aulos:'Aulus',julien:'Julian',lukas:'Lukas',natalya:'Natalia',natalia:'Natalia',helkurt:'Helcurt',hanso:'Hanzo',angel:'Angela',estes:'Estes',ester:'Estes',floren:'Floryn',florin:'Floryn',kalia:'Kalea',diggy:'Diggie',digi:'Diggie',mathilda:'Mathilda',matilda:'Mathilda',joi:'Joy',nolen:'Nolan',edit:'Edith',edith:'Edith',barat:'Barats',baxya:'Baxia',baksia:'Baxia',jonson:'Johnson',atlas:'Atlas',akai:'Akai',uranus:'Uranus',hilda:'Hilda',ruby:'Ruby',rubi:'Ruby',chou:'Chou',cou:'Chou',ciu:'Chou',argus:'Argus',masa:'Masha',masya:'Masha',arlot:'Arlott',sora:'Sora',yin:'Yin',kimi:'Kimmy',lesli:'Lesley',lesly:'Lesley',grenjer:'Granger',grenger:'Granger',beatriks:'Beatrix',melisa:'Melissa',layla:'Layla',laila:'Layla',miya:'Miya',moskow:'Moskov',hanabi:'Hanabi',irithel:'Irithel',iritel:'Irithel',bodi:'Brody',brodi:'Brody',natan:'Natan',nathan:'Natan',kagura:'Kagura',pasa:'Pharsa',farsa:'Pharsa',lunoks:'Lunox',kadita:'Kadita',valir:'Valir',fale:'Vale',ive:'Yve',lilia:'Lylia',lylia:'Lylia',sesilion:'Cecilion',xavier:'Xavier',saviyer:'Xavier',novaria:'Novaria',zuksin:'Zhuxin',zusin:'Zhuxin',aurora:'Aurora',eudora:'Eudora',yudora:'Eudora',harli:'Harley',zask:'Zhask',zas:'Zhask',sayklops:'Cyclops',siklop:'Cyclops',faramis:'Faramis',karina:'Karina',saber:'Saber',seber:'Saber',alfa:'Alpha',alpha:'Alpha',alukard:'Alucard',balmon:'Balmond',bein:'Bane',fraya:'Freya',sun:'Sun',jawhed:'Jawhead',martis:'Martis',badang:'Badang',khaled:'Khaleed',kaled:'Khaleed',xborks:'X.Borg',dyrroth:'Dyrroth',aldus:'Aldous',ling:'Ling',lin:'Ling',benedeta:'Benedetta',yuzhong:'Yu Zhong',aamon:'Aamon',amon:'Aamon',selina:'Selena',chip:'Chip',cip:'Chip'};
 const STOP=new Set(['pick','pik','ban','ben','pilih','cari','dan','terus','trus','sama','lawan','kita','hero','yang','itu','ini','lalu','dengan','tim','biru','merah','musuh','aku','saya','mau','tolong','ke','di','sih','deh','dong','ya','oke','ok','nah','koma']);
@@ -753,6 +787,24 @@ $('voiceBar').onclick=e=>{
     const rest=voiceHits.map(h=>h.name).join(' ');$('search').value=rest;filt.q=rest;renderPool()}
 };
 function clearSearch(){$('search').value='';filt.q='';renderPool()}
+
+// microphone via Web Speech API (if the browser and page allow it)
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null,listening=false;
+function voiceMsg(t){const m=$('voiceMsg');m.hidden=!t;m.textContent=t||''}
+const KEYBOARD_TIP='Tips: pakai tombol mikrofon di keyboard HP (Gboard / keyboard iPhone) lalu ucapkan nama hero ke kolom cari. Bisa beberapa sekaligus, mis. "Hirara Aulus Eudora".';
+$('mic').onclick=()=>{
+  if(!SR){voiceMsg('Browser ini tidak mendukung pengenalan suara langsung. '+KEYBOARD_TIP);$('search').focus();return}
+  if(listening){try{rec.stop()}catch(e){}return}
+  try{
+    rec=new SR();rec.lang='id-ID';rec.interimResults=true;rec.maxAlternatives=1;rec.continuous=false;
+    rec.onstart=()=>{listening=true;$('mic').classList.add('live');$('mic').setAttribute('aria-pressed','true');$('micTxt').textContent='Mendengar…';voiceMsg('Ucapkan nama hero, mis. "Valentina" atau "Hirara Aulus Eudora".')};
+    rec.onresult=e=>{let t='';for(let i=e.resultIndex;i<e.results.length;i++)t+=e.results[i][0].transcript;$('search').value=t;filt.q=t.trim();renderPool()};
+    rec.onerror=e=>{const why=e.error==='not-allowed'||e.error==='service-not-allowed'?'Mikrofon tidak diizinkan di halaman ini.':e.error==='no-speech'?'Tidak ada suara terdengar, coba lagi.':e.error==='network'?'Pengenalan suara butuh koneksi internet.':'Pengenalan suara gagal ('+e.error+').';voiceMsg(why+(e.error==='no-speech'?'':' '+KEYBOARD_TIP))};
+    rec.onend=()=>{listening=false;$('mic').classList.remove('live');$('mic').setAttribute('aria-pressed','false');$('micTxt').textContent='Suara';if(!$('voiceMsg').textContent.startsWith('Mikrofon')&&!$('voiceMsg').textContent.includes('gagal')&&!$('voiceMsg').textContent.startsWith('Tidak'))voiceMsg('')};
+    rec.start();
+  }catch(err){voiceMsg('Pengenalan suara tidak bisa dimulai di sini. '+KEYBOARD_TIP)}
+};
 
 function renderPool(){
   renderVoice();
@@ -831,5 +883,7 @@ chips('roleChips',[['Semua','Semua'],['Meta','Tier S/A'],['Patch','Kena patch']]
 chips('laneChips',[['Semua','Semua lane']].concat(SLOT_ORDER.map(l=>[l,LANES[l]])),'lane');
 renderAll();
 </script>
+
+</body></html>
 </body>
 </html>
