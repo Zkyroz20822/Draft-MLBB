@@ -603,10 +603,10 @@ const HYPER=new Set(['Freya','Natan','Claude','Wanwan','Karrie','Melissa','Bruno
 const FARM_J=new Set(['Ling','Yi Sun-shin','Lancelot','Joy','Fanny','Hanzo','Alucard']);
 const FARM_M=new Set(['Lunox','Cyclops','Cecilion','Yve','Kimmy']);
 const COMPS={
- dive:{label:'Dive',win:'tiap war, damage dealer lawan harus habis duluan. Kompak, tentukan prioritas target, jangan buang semua skill ke satu target',weak:'hero penggagal inisiasi (disengager)'},
- poke:{label:'Poke (cicil)',win:'darah lawan harus tinggal sedikit sebelum war, lalu eksekutor masuk menghabisi. Hero penggagal inisiasi wajib menahan open war lawan',weak:'lawan yang pintar flank dan main vision (kuat di bawah Mythic Glory)'},
- ftb:{label:'Front-to-back',win:'backline (2 damage dealer konsisten, beda tipe damage) menghabisi frontline lawan, frontline (inisiator, sustain, disengager) zoning backline lawan',weak:'terlalu bergantung MM/mage: rawan di-pick off dan di-split push'},
- hyper:{label:'Hyper carry',win:'satu carry DPS harus kaya, roamer selalu menemani carry, yang lain mengawal',weak:'kalau carry miskin gold, tim kalah'}
+ dive:{label:'Dive',short:'habisi damage lawan duluan',win:'tiap war, damage dealer lawan harus habis duluan. Kompak, tentukan prioritas target, jangan buang semua skill ke satu target',weak:'hero penggagal inisiasi (disengager)'},
+ poke:{label:'Poke',short:'cicil dulu, baru war',win:'darah lawan harus tinggal sedikit sebelum war, lalu eksekutor masuk menghabisi. Hero penggagal inisiasi wajib menahan open war lawan',weak:'lawan yang pintar flank dan main vision (kuat di bawah Mythic Glory)'},
+ ftb:{label:'Front-to-back',short:'backline habisi frontline lawan',win:'backline (2 damage dealer konsisten, beda tipe damage) menghabisi frontline lawan, frontline (inisiator, sustain, disengager) zoning backline lawan',weak:'terlalu bergantung MM/mage: rawan di-pick off dan di-split push'},
+ hyper:{label:'Hyper carry',short:'carry harus kaya',win:'satu carry DPS harus kaya, roamer selalu menemani carry, yang lain mengawal',weak:'kalau carry miskin gold, tim kalah'}
 };
 function compKind(hs){
   if(hs.length<2)return null;
@@ -784,7 +784,7 @@ function renderTeam(team){
     if(spTot>=2){const miss=['E','M','L'].filter(k=>!c.sp[k]).map(k=>SPIKE_TXT[k]);
       notes.push([miss.length&&ps.length>=4?'warn':'',`Waktu kuat (perkiraan): Early ${c.sp.E} · Mid ${c.sp.M} · Late ${c.sp.L}`+(miss.length&&ps.length>=4?` (belum ada hero kuat di ${miss.join(' & ')} game)`:'')])}
     const ck=compKind(ps.map(p=>p.h));
-    if(ck)notes.push(['good',`Komposisi ${COMPS[ck].label}. Kondisi menang: ${COMPS[ck].win}. Waspada: ${COMPS[ck].weak}`]);
+    if(ck)notes.push(['good',`Komposisi ${COMPS[ck].label}: ${COMPS[ck].short}`]);
     const missR=CLASSIC.filter(r=>!c.roles[r]);
     if(ps.length===5&&missR.length)notes.push(['','Komposisi klasik 1 MM · 1 Fighter · 1 Assassin · 1 Mage · 1 Tank, kurang: '+missR.join(', ')]);
   }
@@ -797,7 +797,7 @@ function renderTeam(team){
   const synTxt=syn.length>=4?'Kuat':syn.length>=2?'Cukup':syn.length===1?'Lemah':'Belum ada';
   h+=`<div class="comp"><div class="label">Kebutuhan tim</div><div class="needs">${nd.list.map(([n,ok])=>`<span class="lchip ${ok?'ok':(ps.length>=3?'miss':'')}">${n}</span>`).join('')}</div>
     <ul class="notes">${notes.map(([cl,t])=>`<li class="${cl}">${esc(t)}</li>`).join('')}</ul>
-    ${ps.length>=2?`<div class="label">Sinergi tim</div><div class="syn-meter"><div class="syn-bar"><span style="width:${pct}%"></span></div><span>${synTxt}</span></div><ul class="notes">${syn.length?syn.slice(0,4).map(r=>`<li class="good">${esc(r)}</li>`).join(''):'<li class="warn">Belum ada kombinasi. Cari engager + ult area, atau support yang menempel ke carry.</li>'}</ul>`:''}</div>`;
+    ${ps.length>=2?`<div class="label">Sinergi tim</div><div class="syn-meter"><div class="syn-bar"><span style="width:${pct}%"></span></div><span>${synTxt}</span></div><ul class="notes">${syn.length?syn.slice(0,4).map(r=>`<li class="good">${esc(r)}</li>`).join(''):''}</ul>`:''}</div>`;
   el.innerHTML=h;
   el.classList.toggle('active',!!s&&s.t===team);
   const inp=$('name'+team);
@@ -807,24 +807,28 @@ function renderTeam(team){
 
 /* ---------- render: recommendations ---------- */
 function recCard(x,i,ctx){
-  const g=t=>x.why.filter(w=>w[0]===t).map(w=>w[1]);
-  const ctr=g('ctr').map(t=>t.replace(/^Counter /,'').replace(/^Mengancam /,''));
-  const syn=g('syn').map(t=>t.replace(/^Sinergi: /,''));
-  const neg=g('neg'),meta=g('meta'),need=g('');
+  const h=x.h,mineH=heroesOf(ctx.team),foeH=heroesOf(other(ctx.team));
+  const nm=a=>a.map(z=>z.name).join(', ');
   const rows=[];
   if(ctx.ban){
-    rows.push(['Ancaman',ctr.length?ctr.join(' · '):'',ctr.length?'ctr':'none']);
+    const th=mineH.filter(m=>counters(h.name,m.name));
+    if(th.length)rows.push(['Counter',nm(th),'ctr']);
   }else{
-    if(ctx.foe)rows.push(['Counter',ctr.length?ctr.join(' · '):'Tidak meng-counter pick lawan',ctr.length?'ctr':'none']);
-    if(ctx.mine)rows.push(['Sinergi',syn.length?syn.join(' · '):'Tidak ada kombinasi khusus dengan tim',syn.length?'syn':'none']);
-    if(need.length)rows.push(['Tim',need.join(' · '),'']);
+    const ct=foeH.filter(e=>counters(h.name,e.name)),sy=mineH.filter(m=>synergy(m,h)||synergy(h,m));
+    if(ct.length)rows.push(['Counter',nm(ct),'ctr']);
+    if(sy.length)rows.push(['Sinergi',nm(sy),'syn']);
+    const by=foeH.filter(e=>counters(e.name,h.name)),bad=mineH.filter(m=>antiSynergy(m,h)||antiSynergy(h,m));
+    const risk=[];if(by.length)risk.push('di-counter '+nm(by));if(bad.length)risk.push('bentrok '+nm(bad));
+    if(risk.length)rows.push(['Risiko',risk.join(' · '),'neg']);
   }
-  if(neg.length)rows.push(['Risiko',neg.join(' · '),'neg']);
-  if(meta.length)rows.push(['Meta',meta.join(' · '),'meta']);
-  if(ctx.ban&&need.length)rows.push(['Catatan',need.join(' · '),'']);
-  const shown=rows.filter(r=>r[1]);
-  const flags=(ctr.length&&!ctx.ban?'<span class="flag">Counter</span>':'')+(syn.length?'<span class="flag syn">Sinergi</span>':'');
-  return `<button class="rec ${i<3?'top':''}" data-n="${esc(x.h.name)}" ${x.lane?`data-lane="${x.lane}"`:''}><div class="rhead">${mono(x.h)}<div style="min-width:0"><div class="rn"><span class="rank">#${i+1}</span>${esc(x.h.name)}${pbadge(x.h.name)}${tbadge(x.h.name)}${flags}</div><div class="rr">${ctx.pick&&x.lane?`<span class="lanepill">→ ${LANES[x.lane]}</span> `:''}${roleTxt(x.h)} · ${x.h.lanes.map(l=>LANES[l]).join(' / ')}</div></div><span class="score">${x.s>0?'+':''}${x.s.toFixed(1)}</span></div>${shown.length?`<dl class="rrows">${shown.map(r=>`<dt>${r[0]}</dt><dd class="${r[2]}">${esc(r[1])}</dd>`).join('')}</dl>`:''}</button>`;
+  const m=META[h.name],p=PATCH[h.name],mp=MPL[h.name],mt=[];
+  if(isOP(h.name))mt.push('OP');
+  if(m){mt.push('Tier '+m[0],'WR '+m[1]+'%');if(m[2])mt.push('Ban '+m[2]+'%')}
+  if(mp)mt.push('MPL '+mp+'%');
+  if(p)mt.push({b:'Buff',n:'Nerf',a:'Rework'}[p[0]]);
+  if(mt.length)rows.push(['Meta',mt.join(' · '),'meta']);
+  const flags=(rows.some(r=>r[0]==='Counter')&&!ctx.ban?'<span class="flag">Counter</span>':'')+(rows.some(r=>r[0]==='Sinergi')?'<span class="flag syn">Sinergi</span>':'');
+  return `<button class="rec ${i<3?'top':''}" data-n="${esc(h.name)}" ${x.lane?`data-lane="${x.lane}"`:''}><div class="rhead">${mono(h)}<div style="min-width:0"><div class="rn"><span class="rank">#${i+1}</span>${esc(h.name)}${pbadge(h.name)}${tbadge(h.name)}${flags}</div><div class="rr">${ctx.pick&&x.lane?`<span class="lanepill">→ ${LANES[x.lane]}</span> `:''}${roleTxt(h)}</div></div><span class="score">${x.s>0?'+':''}${x.s.toFixed(1)}</span></div>${rows.length?`<dl class="rrows">${rows.map(r=>`<dt>${r[0]}</dt><dd class="${r[2]}">${esc(r[1])}</dd>`).join('')}</dl>`:''}</button>`;
 }
 let recFilter='all',recAll=false;
 function renderRecs(){
@@ -867,21 +871,18 @@ function renderRecs(){
     // threat summary
     const rows=foe.map(e=>{
       const ans=mine.filter(m=>counters(m.name,e.name));
-      if(ans.length)return `<div class="trow ok"><span class="who">${esc(e.name)}</span><span class="arrow">→</span> sudah dijawab ${esc(ans.map(a=>a.name).join(', '))}</div>`;
+      if(ans.length)return `<div class="trow ok"><span class="who">${esc(e.name)}</span><span class="arrow">→</span> ✓ ${esc(ans.map(a=>a.name).join(', '))}</div>`;
       const cs=countersOf(e.name).filter(c=>canUse(c.n)).slice(0,4);
       const tip=tipOf(e.name);
-      return `<div class="trow"><span class="who">${esc(e.name)}${pbadge(e.name)}</span><span class="arrow">→ counter:</span>${cs.length?cs.map(c=>`<button class="tchip" data-n="${esc(c.n)}" title="${esc(c.w)}${fits(heroBy(c.n))?'':' · lane-nya sudah terisi'}">${esc(c.n)}${fits(heroBy(c.n))?'':' *'}</button>`).join(''):'<span class="p-sub">semua counter sudah diban/dipick</span>'}${tip?`<span class="tipx">${esc(tip)}</span>`:''}</div>`}).join('');
+      return `<div class="trow"><span class="who">${esc(e.name)}${pbadge(e.name)}</span><span class="arrow">→</span>${cs.length?cs.map(c=>`<button class="tchip" data-n="${esc(c.n)}" title="${esc(c.w)}${fits(heroBy(c.n))?'':' · lane-nya sudah terisi'}">${esc(c.n)}${fits(heroBy(c.n))?'':' *'}</button>`).join(''):'<span class="p-sub">semua counter sudah diban/dipick</span>'}</div>`}).join('');
     const avoid=scored.filter(x=>META[x.h.name]).map(x=>({x,by:foe.find(e=>counters(e.name,x.h.name))})).filter(o=>o.by).slice(0,3);
-    extra=`<div class="threats"><div class="label">${enemyTurn?'Hero kalian yang perlu dijawab lawan':'Hero lawan yang perlu dijawab'}</div>${rows}
-      ${avoid.length?`<div class="avoid">Hindari: ${avoid.map(o=>esc(o.x.h.name)+' (di-counter '+esc(o.by.name)+')').join(', ')}</div>`:''}
-      <div class="p-sub">Klik nama counter untuk langsung memilihnya. Tanda * = lane hero itu di timmu sudah terisi.</div></div>`;
+    extra=`<div class="threats"><div class="label">${enemyTurn?'Hero kalian':'Hero lawan'}</div>${rows}
+      ${avoid.length?`<div class="avoid">Hindari: ${avoid.map(o=>esc(o.x.h.name)).join(', ')}</div>`:''}</div>`;
   }
   const noPicks=!heroesOf('B').length&&!heroesOf('R').length;
   const title=s.k==='ban'?'Rekomendasi ban':enemyTurn?'Prediksi pick lawan':'Rekomendasi pick';
-  const sub=s.k==='ban'?'Hero dengan ban rate & tier tertinggi, plus yang mengancam pick kalian.'
-    :noPicks?`Belum ada pick, jadi saran diambil dari hero yang paling kuat di meta untuk ${laneTxt}.`
-    :`Untuk ${laneTxt}. Prioritas: counter ke lawan, sinergi dengan tim, kebutuhan tim, lalu kekuatan meta. Lane tiap hero diisi otomatis.`;
-  const ctx={ban:s.k==='ban',foe:foe.length>0,mine:mine.length>0,pick:s.k==='pick'};
+  const sub='';
+  const ctx={ban:s.k==='ban',foe:foe.length>0,mine:mine.length>0,pick:s.k==='pick',team:s.t};
   const topSet=new Set(top.map(x=>x.h.name));
   let rest=scored.filter(x=>!topSet.has(x.h.name));
   const pass=x=>recFilter==='all'||(recFilter==='ctr'&&x.why.some(w=>w[0]==='ctr'))||(recFilter==='syn'&&x.why.some(w=>w[0]==='syn'))||(recFilter==='meta'&&!!META[x.h.name]);
@@ -889,15 +890,14 @@ function renderRecs(){
   const cap=s.k==='ban'&&!recAll?24:Infinity;const hidden=Math.max(0,restF.length-cap);restF=restF.slice(0,cap);
   const fchips=[['all','Semua'],['ctr',s.k==='ban'?'Mengancam tim':'Ada counter'],['syn','Ada sinergi'],['meta','Tier S/A']].filter(f=>!(s.k==='ban'&&f[0]==='syn'));
   let n=0;const cards=arr=>arr.map(x=>recCard(x,n++,ctx)).join('');
-  el.innerHTML=`<div class="p-head"><div class="p-title">${title} · <span class="${s.t}">${esc(state.names[s.t])}</span>${lane?' · '+LANE_FULL[lane]:''}</div><div class="p-sub">${sub}</div></div>
+  el.innerHTML=`<div class="p-head"><div class="p-title">${title} · <span class="${s.t}">${esc(state.names[s.t])}</span>${lane?' · '+LANE_FULL[lane]:''}</div></div>
    ${extra}
    <div class="rbar"><div class="chips" id="recChips">${fchips.map(([v,l])=>`<button class="chip" data-rf="${v}" aria-pressed="${recFilter===v}">${l}</button>`).join('')}</div><span class="p-sub">${scored.length} hero cocok</span></div>
    ${s.k==='pick'?`<div class="chips" id="laneRec"><span class="label" style="align-self:center;margin-right:4px">Lane</span><button class="chip" data-rl="" aria-pressed="${!lane}">Semua lane kosong</button>${free.map(l=>`<button class="chip" data-rl="${l}" aria-pressed="${lane===l}">${LANES[l]}</button>`).join('')}</div>`:''}
    ${topF.length?`<div class="rec-group"><h3>Pilihan terbaik</h3><div class="rec-list">${cards(topF)}</div></div>`:''}
    ${restF.length?`<div class="rec-group"><h3>Pilihan lain</h3><div class="rec-list">${cards(restF)}</div></div>`:''}
    ${!topF.length&&!restF.length?'<div class="p-sub">Tidak ada hero yang cocok dengan filter ini.</div>':''}
-   ${hidden?`<button class="btn more" id="recMore">Tampilkan ${hidden} hero lagi</button>`:''}
-   <div class="p-sub">Klik kartu untuk langsung memilih. Skor hanya panduan, bukan jaminan; skill pemain tetap paling menentukan.</div>`;
+   ${hidden?`<button class="btn more" id="recMore">Tampilkan ${hidden} hero lagi</button>`:''}`;
 }
 
 /* ---------- render: pool ---------- */
