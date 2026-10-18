@@ -198,6 +198,15 @@ button.pslot:hover{border-color:var(--turn)}
 .hero .corner-l{position:absolute;top:4px;left:4px} .hero .corner-r{position:absolute;top:4px;right:4px}
 .hero.noban .x{width:38px;height:38px;border-radius:7px;border:2px solid var(--muted);display:grid;place-items:center;font:800 24px/1 var(--f-display);color:var(--muted)}
 .hero.noban{border-style:dashed}
+.hcell{position:relative;min-width:0;display:flex}
+.hcell>.hero{flex:1;min-width:0}
+.lanepick{position:absolute;inset:0;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:3px;align-content:center;padding:4px;border-radius:8px;background:var(--surface);border:2px solid var(--turn);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.lpb{height:24px;min-width:0;border-radius:5px;border:1px solid var(--line);background:var(--sunk);color:var(--ink);font:700 11.5px/1 var(--f-display);letter-spacing:.04em;text-transform:uppercase;padding:0 2px}
+.lpb.fit{background:var(--turn);border-color:var(--turn);color:var(--surface)}
+.lpb:hover:not(:disabled){border-color:var(--ink);color:var(--ink)}
+.lpb.fit:hover:not(:disabled){color:var(--surface);filter:brightness(1.1)}
+.lpb:disabled{opacity:.25;cursor:not-allowed}
+.lpx{height:24px;border:none;background:none;color:var(--muted);font-size:14px;padding:0}
 .empty-pool{color:var(--muted);font-size:14px;padding:16px 4px}
 .hint{font-size:12px;color:var(--muted)}
 .done-msg{font:700 18px var(--f-display);text-transform:uppercase;color:var(--good)}
@@ -730,7 +739,7 @@ function renderTurn(){
       hint=!s.rev?`Ban serentak. Pilih ${left} ban lagi; ban lawan tetap tersembunyi. Kotak ✕ = tidak ban.`
                  :`Ban lawan terungkap. Masukkan ${left} hero yang mereka ban (boleh sama dengan ban kalian). Pakai kotak ✕ untuk ban kosong.`;
     }else if(s.k==='ban')hint='Pakai kotak ✕ kalau tidak ada ban.';
-    else{const pn=slotsFor(s.t,'pick').indexOf(c)+1;hint=`Pick ke-${pn}. ${curLane()?'Lane dikunci: '+LANE_FULL[curLane()]+'. Klik slotnya lagi untuk kembali ke otomatis.':'Lane otomatis: hero langsung masuk ke lane yang cocok dan masih kosong. Klik slot di panel tim kalau mau mengunci lane.'}${s.t!==state.me?' Masukkan hero yang dipilih lawan.':''}`}
+    else{const pn=slotsFor(s.t,'pick').indexOf(c)+1;hint=`Pick ke-${pn}. Klik hero, lalu pilih lane-nya.${s.t!==state.me?' Masukkan hero yang dipilih lawan.':''}`}
     $('turnText').innerHTML=s.k==='ban'&&s.rev?`Ban lawan · <span class="who ${s.t}">${esc(state.names[s.t])}</span>`
       :`Giliran <span class="who ${s.t}">${esc(state.names[s.t])}</span> · ${s.k==='ban'?'Ban':'Pick'+(curLane()?' '+LANES[curLane()]:'')}`;
     $('turnHint').textContent=hint;}
@@ -758,12 +767,11 @@ function renderTeam(team){
     const has=i<c,n=state.steps[i];
     return `<div class="bslot ${has&&n?'filled':''} ${has&&!n?'skip':''} ${i===c?'now':''}" title="${has?esc(n||'Tidak ban'):''}">${has?esc(initials(n)):''}</div>`}).join('')+
     `</div><div class="bnames">${hiddenBans?'Tersembunyi sampai sesi ban selesai':(bansShown.length?esc(bansShown.join(', ')):'&nbsp;')}</div></div>`;
-  h+=`<div><div class="label" style="margin-bottom:6px">Pick per lane</div><div class="picks">`+SLOT_ORDER.map(l=>{
+  h+=`<div><div class="label" style="margin-bottom:6px">Pick</div><div class="picks">`+SLOT_ORDER.map(l=>{
     const p=ps.find(x=>x.lane===l);
-    const lab=`<div class="plane">${LANES[l]}<small>${l==='J'||l==='R'?'&nbsp;':'lane'}</small></div>`;
+    const lab=`<div class="plane">${LANES[l]}</div>`;
     if(p){const fit=laneFit(p.h,l);
       return `<div class="pslot">${lab}${mono(p.h)}<div style="min-width:0"><div class="pname"><span class="t">${esc(p.h.name)}</span>${pbadge(p.h.name)}${tbadge(p.h.name)}</div><div class="prole ${fit?'warn':''}">${fit?esc(fit):roleTxt(p.h)}</div></div></div>`}
-    if(myPickTurn)return `<button class="pslot ${sel===l?'sel':''}" data-lane="${l}" aria-pressed="${sel===l}">${lab}${mono(null)}<div class="pname empty">${sel===l?'Dikunci: pick masuk sini':'Kosong · klik untuk kunci'}</div></button>`;
     return `<div class="pslot">${lab}${mono(null)}<div class="pname empty">Kosong</div></div>`;
   }).join('')+`</div></div>`;
   // analysis
@@ -802,7 +810,7 @@ function renderTeam(team){
   el.classList.toggle('active',!!s&&s.t===team);
   const inp=$('name'+team);
   inp.addEventListener('change',()=>{state.names[team]=inp.value.trim()||(team==='B'?'Tim Biru':'Tim Merah');save();renderAll()});
-  el.querySelectorAll('button.pslot').forEach(b=>b.onclick=()=>{state.sel=state.sel===b.dataset.lane?null:b.dataset.lane;save();renderAll()});
+  
 }
 
 /* ---------- render: recommendations ---------- */
@@ -944,17 +952,24 @@ $('voiceBar').onclick=e=>{
 function clearSearch(){$('search').value='';filt.q='';renderPool()}
 
 
+let laneAsk=null;
+function lanePicker(h){
+  const free=freeLanes(SEQ[cur()].t);
+  return `<div class="lanepick" role="group" aria-label="Pilih lane ${esc(h.name)}">${SLOT_ORDER.map(l=>`<button class="lpb ${h.lanes.includes(l)?'fit':''}" data-lane="${l}" data-n="${esc(h.name)}" title="${LANE_FULL[l]}" ${free.includes(l)?'':'disabled'}>${LANES[l]}</button>`).join('')}<button class="lpx" data-close="1" title="Batal" aria-label="Batal">✕</button></div>`;
+}
 function renderPool(){
   renderVoice();
   const q=filt.q.toLowerCase(),c=cur();
-  const banTurn=!done()&&SEQ[c].k==='ban';
+  const banTurn=!done()&&SEQ[c].k==='ban',pickTurn=!done()&&SEQ[c].k==='pick';
+  if(!pickTurn)laneAsk=null;
   const list=allHeroes().filter(h=>(filt.role==='Semua'||(filt.role==='Meta'?!!META[h.name]:filt.role==='Patch'?!!PATCH[h.name]:has(h,filt.role)))&&(filt.lane==='Semua'||h.lanes.includes(filt.lane))&&(!q||h.name.toLowerCase().includes(q)||voiceHits.some(v=>v.name===h.name)));
   const noBan=banTurn&&!q?`<button class="hero noban" data-none="1" title="Tandai slot ban ini kosong"><div class="x">✕</div><span class="hn">Tidak ban</span><span class="hl">slot kosong</span></button>`:'';
   $('grid').innerHTML=noBan+(list.length?list.map(h=>{
     const used=statusOf(h.name).filter(u=>!(isHidden(u.i)&&u.t!==state.me));
     const u=used[used.length-1];
     const tag=u?`<span class="tag ${u.t}">${u.k==='ban'?'Diban':'Dipick'} ${u.t==='B'?'Biru':'Merah'}</span>`:`<span class="hl">${h.lanes.map(l=>LANES[l]).join(' / ')||h.role}</span>`;
-    return `<button class="hero" data-n="${esc(h.name)}" ${canUse(h.name)?'':'disabled'} title="${esc(h.name)} · ${roleTxt(h)}${PATCH[h.name]?' · '+esc(PATCH[h.name][1]):''}">${META[h.name]?`<span class="corner-l">${tbadge(h.name)}</span>`:''}${PATCH[h.name]?`<span class="corner-r">${pbadge(h.name)}</span>`:''}${mono(h)}<span class="hn">${esc(h.name)}</span>${tag}</button>`}).join('')
+    const ask=laneAsk===h.name&&pickTurn?lanePicker(h):'';
+    return `<div class="hcell">${ask}<button class="hero" data-n="${esc(h.name)}" ${canUse(h.name)?'':'disabled'} title="${esc(h.name)} · ${roleTxt(h)}${PATCH[h.name]?' · '+esc(PATCH[h.name][1]):''}">${META[h.name]?`<span class="corner-l">${tbadge(h.name)}</span>`:''}${PATCH[h.name]?`<span class="corner-r">${pbadge(h.name)}</span>`:''}${mono(h)}<span class="hn">${esc(h.name)}</span>${tag}</button></div>`}).join('')
     :`<div class="empty-pool">Tidak ada hero yang cocok. Tekan Enter untuk menambahkan "${esc(filt.q)}" sebagai hero baru.</div>`);
 }
 function chips(id,items,key){
@@ -969,7 +984,7 @@ function act(name){
   if(name===null&&s.k!=='ban')return;
   if(name!==null&&!canUse(name))return;
   if(s.k==='pick')state.lanes[cur()]=laneOfPick(heroBy(name),s.t);
-  state.steps.push(name);state.sel=null;recFilter='all';recAll=false;state.sample=false;save();
+  laneAsk=null;state.steps.push(name);state.sel=null;recFilter='all';recAll=false;state.sample=false;save();
   $('search').value='';filt.q='';
   resetTimer();renderAll();
 }
@@ -992,7 +1007,20 @@ function updTimer(){const t=$('timer');t.hidden=!timerOn||done();t.textContent=t
 $('timerBtn').onclick=()=>{timerOn=!timerOn;$('timerBtn').textContent='Timer 30 dtk: '+(timerOn?'nyala':'mati');$('timerBtn').classList.toggle('on',timerOn);$('timerBtn').setAttribute('aria-pressed',timerOn);
   clearInterval(tick);resetTimer();if(timerOn)tick=setInterval(()=>{if(timeLeft>0){timeLeft--;updTimer()}},1000)};
 
-$('grid').onclick=e=>{const b=e.target.closest('.hero');if(!b||b.disabled)return;if(b.dataset.none)act(null);else act(b.dataset.n)};
+$('grid').onclick=e=>{
+  const lb=e.target.closest('.lpb');
+  if(lb){if(lb.disabled)return;state.sel=lb.dataset.lane;laneAsk=null;act(lb.dataset.n);return}
+  if(e.target.closest('[data-close]')){laneAsk=null;renderPool();return}
+  const b=e.target.closest('.hero');if(!b||b.disabled)return;
+  if(b.dataset.none){act(null);return}
+  const s=done()?null:SEQ[cur()];
+  if(s&&s.k==='pick'){
+    const free=freeLanes(s.t);
+    if(free.length===1){state.sel=free[0];act(b.dataset.n);return}
+    laneAsk=laneAsk===b.dataset.n?null:b.dataset.n;renderPool();return;
+  }
+  act(b.dataset.n)};
+document.addEventListener('click',e=>{if(laneAsk&&!e.target.closest('.hcell')){laneAsk=null;renderPool()}});
 $('recs').onclick=e=>{
   const f=e.target.closest('[data-rf]');if(f){recFilter=f.dataset.rf;renderRecs();return}
   if(e.target.closest('#recMore')){recAll=true;renderRecs();return}
@@ -1007,7 +1035,7 @@ document.addEventListener('keydown',e=>{
   const t=e.target,tag=(t&&t.tagName)||'';
   if(t&&(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||t.isContentEditable))return;
   const sb=$('search');
-  if(e.key==='Escape'){if(sb.value){clearSearch()}return}
+  if(e.key==='Escape'){if(laneAsk){laneAsk=null;renderPool()}else if(sb.value){clearSearch()}return}
   if(e.key==='Backspace'){if(sb.value){e.preventDefault();sb.focus();sb.value=sb.value.slice(0,-1);filt.q=sb.value.trim();renderPool()}return}
   if(e.key==='Enter'&&sb.value&&!(t&&(tag==='BUTTON'||tag==='A'))){e.preventDefault();sb.focus();sb.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));return}
   if(e.key.length!==1||!/[\p{L}\p{N} .'\-]/u.test(e.key))return;
