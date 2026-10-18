@@ -316,7 +316,7 @@ const TRAIT_LIST={
  m:'Fanny Ling Lancelot Gusion Hayabusa Joy Wanwan Benedetta Hirara Nolan Hanzo Karina Harley Alucard Chou Paquito Aamon Kagura Julian Suyou Arlott Cici Sora Guinevere Natalia Saber Helcurt Harith Mathilda Zilong Khaleed Freya Alpha Lapu-Lapu Yin Selena Martis Aulus Kaja Masha Bruno Obsidia Marcel',
  h:'Estes Floryn Rafaela Angela Esmeralda Uranus Alice Yu Zhong Ruby Thamuz Fredrinn Alucard Balmond Lukas Cici Kalea Masha X.Borg Terizla Arlott Hylos Aulus Freya Kaja',
  t:'Tigreal Franco Minotaur Johnson Lolita Hylos Grock Atlas Khufra Belerick Gatotkaca Baxia Gloo Barats Uranus Edith Fredrinn Akai Hilda Marcel Chip Terizla Masha Esmeralda Carmilla Sora',
- c:'Tigreal Atlas Lolita Khufra Franco Johnson Minotaur Chou Kaja Grock Gatotkaca Marcel Hylos Kalea Edith Ruby Akai Carmilla Barats Gloo Belerick Sora Masha Hirara Freya Eudora Bruno',
+ c:'Selena Tigreal Atlas Lolita Khufra Franco Johnson Minotaur Chou Kaja Grock Gatotkaca Marcel Hylos Kalea Edith Ruby Akai Carmilla Barats Gloo Belerick Sora Masha Hirara Freya Eudora Bruno',
  u:'Odette Pharsa Yve Chang\'e',
  b:'Gusion Karina Lancelot Saber Natalia Helcurt Hayabusa Aamon Selena Eudora Harley Hirara Nolan Joy Fanny Ling Hanzo Suyou',
  U:'Carmilla Belerick Atlas Tigreal Lolita Pharsa Odette Lunox Johnson Grock Gatotkaca Minotaur Khufra Aurora Yve Kagura Chou Kaja Franco Lylia Faramis Gord Xavier Vale Cecilion Novaria Marcel Sora',
@@ -512,6 +512,7 @@ const dmgType=h=>(has(h,'Mage')||MAGIC_DMG.has(h.name))?'M':'P';
 const isDealer=h=>!((h.role==='Tank'||h.role==='Support')&&!has(h,'Mage')&&!has(h,'Marksman')&&!has(h,'Fighter'));
 // hero tebal: punya sifat tebal, atau fighter yang punya sustain
 const isTough=h=>tr(h.name).includes('t')||(has(h,'Fighter')&&tr(h.name).includes('h'));
+const laneOK=(h,lane)=>isTough(h)||h.role==='Support'||(lane==='R'&&(tr(h.name).includes('c')||DISENG.has(h.name)));
 // waktu kuat (perkiraan umum per role, dengan pengecualian yang dikenal)
 const SPIKE_EARLY=new Set(['Saber','Natalia','Karina','Helcurt','Eudora','Hayabusa','Lancelot','Bane','Jawhead','Kadita','Chou','Paquito','Badang','Balmond','Roger','Fanny','Ling','Hirara','Nolan','Joy','Aamon','Gusion','Harley','Selena','Yin','Julian','Suyou','Benedetta','Martis','Freya','Sun','Alpha','Leomord','Lapu-Lapu','Masha','Aulus','Gord','Zhask','Vexana','Chang\'e','Kimmy','Brody','Natan','Clint','Harith']);
 const SPIKE_LATE=new Set(['Aldous','Lunox','Alucard','Uranus','Cecilion','Esmeralda','Thamuz','Yu Zhong','Hanzo','Valentina','Arlott','X.Borg','Cici','Lukas','Sora','Dyrroth','Terizla']);
@@ -537,7 +538,7 @@ function compScore(h,mine,lane,why){
   let s=0;const c=compOf(mine);
   // 2) defense
   if(mine.length>=2&&!c.tough.length&&isTough(h)){s+=2;why.push(['','Tim belum ada hero tebal (minimal 1)'])}
-  if((lane==='R'||lane==='E')&&!isTough(h)&&h.role!=='Support'){s-=1;why.push(['neg',`${LANE_FULL[lane]} sebaiknya hero tebal`])}
+  if((lane==='R'||lane==='E')&&!laneOK(h,lane)){s-=1;why.push(['neg',`${LANE_FULL[lane]} sebaiknya hero tebal`])}
   else if((lane==='R'||lane==='E')&&isTough(h)&&mine.length){s+=0.5}
   // 3) damage
   if(isDealer(h)){
@@ -574,6 +575,7 @@ function teamNeeds(team){
     ['Frontline',ps.some(p=>isFront(p.h,p.lane))],
     ['CC / engage',hs.some(h=>ENG.has(h.name)||tr(h.name).includes('c'))],
     ['Hero tebal',hs.some(isTough)],
+    ['Penggagal inisiasi',hs.some(h=>DISENG.has(h.name))],
     ['Damage magic',hs.some(h=>isDealer(h)&&dmgType(h)==='M')],
     ['Damage fisik',hs.some(h=>isDealer(h)&&dmgType(h)==='P')],
     ['Carry late',hs.some(h=>h.role==='Marksman')||ps.some(p=>p.lane==='G'&&isPhys(p.h))]
@@ -582,6 +584,57 @@ function teamNeeds(team){
   if(healers.length)n.push(['Anti-heal',hs.some(h=>h.name==='Baxia'||h.name==='Karrie')]);
   return {list:n,healers};
 }
+
+/* ---------- wawasan draft (ATM dari "Tutorial Draft Immortal" – Monkeyplay & draft MPL S18) ----------
+   Ban:  ~3 hero OP per meta. First pick → ban OP sampai tersisa 1 (cuma kamu yang dapat).
+         Second pick → biarkan 3 OP lepas (lawan ambil 1, kamu ambil 2). Selain OP, ban counter hero yang mau kamu pakai.
+   Pick: urutan prioritas = hero OP → hero fleksibel (>1 lane) → counter lawan → tahan badan → damage dealer → inisiator.
+   Komposisi & kondisi menang: Dive, Poke, Front-to-back, Hyper carry (tidak saling counter mutlak, peluang imbang).
+   Contoh hero di video sudah 3 tahun, jadi daftar di bawah disusun ulang dengan kit terbaru (s.d. 2.2.16a). */
+// presence (pick+ban) MPL Season 18 – gabungan ID/PH/MY, data s.d. Okt 2026
+const MPL={Freya:99,Hirara:97,Atlas:95,Paquito:89,Uranus:74,Rafaela:74,Selena:73,Melissa:72,Marcel:71,Barats:71,Fanny:69,Belerick:69,Eudora:61,Carmilla:60,Minotaur:52,Nolan:52,Valentina:47,Claude:45,Gatotkaca:40,Masha:35,Esmeralda:31};
+const DIVE=new Set(['Yu Zhong','X.Borg','Paquito','Aulus','Masha','Sora','Freya','Arlott','Benedetta','Lapu-Lapu','Chou','Martis','Cici','Baxia','Fanny','Lancelot','Ling','Hayabusa','Hirara','Nolan','Joy','Aamon','Karina','Saber','Helcurt','Natalia','Suyou','Yin','Julian','Alucard','Selena','Kagura','Valentina','Harley','Gusion','Harith','Mathilda','Kalea','Kaja','Claude','Wanwan','Roger','Natan','Irithel']);
+const POKE=new Set(['Novaria','Xavier','Zetian','Pharsa','Yve','Lylia','Cecilion','Chang\'e','Zhask','Vale','Kimmy','Granger','Layla','Beatrix','Lesley','Ixia','Moskov','Popol and Kupa','Angela','Floryn','Estes','Rafaela','Faramis']);
+const EXEC=new Set(['Martis','Roger','Karina']);
+const DISENG=new Set(['Valir','Akai','Hylos','Ruby','Fredrinn','Barats','Lolita','Grock','Belerick','Diggie','Minsitthar','Khufra','Phoveus','Marcel','Chou','Franco']);
+const DPS=new Set(['Kimmy','Cecilion','Xavier','Lunox','Zhuxin','Yve','Pharsa','Lylia','Valir','Harith','Luo Yi','Zetian','Novaria','Valentina']);
+BASE.forEach(h=>{if(h.role==='Marksman'&&h.name!=='Lesley')DPS.add(h.name)});
+const HYPER=new Set(['Freya','Natan','Claude','Wanwan','Karrie','Melissa','Bruno','Obsidia','Irithel','Ling','Yi Sun-shin','Lancelot','Alucard','Hanzo','Yin','Aldous']);
+const FARM_J=new Set(['Ling','Yi Sun-shin','Lancelot','Joy','Fanny','Hanzo','Alucard']);
+const FARM_M=new Set(['Lunox','Cyclops','Cecilion','Yve','Kimmy']);
+const COMPS={
+ dive:{label:'Dive',win:'tiap war, damage dealer lawan harus habis duluan. Kompak, tentukan prioritas target, jangan buang semua skill ke satu target',weak:'hero penggagal inisiasi (disengager)'},
+ poke:{label:'Poke (cicil)',win:'darah lawan harus tinggal sedikit sebelum war, lalu eksekutor masuk menghabisi. Hero penggagal inisiasi wajib menahan open war lawan',weak:'lawan yang pintar flank dan main vision (kuat di bawah Mythic Glory)'},
+ ftb:{label:'Front-to-back',win:'backline (2 damage dealer konsisten, beda tipe damage) menghabisi frontline lawan, frontline (inisiator, sustain, disengager) zoning backline lawan',weak:'terlalu bergantung MM/mage: rawan di-pick off dan di-split push'},
+ hyper:{label:'Hyper carry',win:'satu carry DPS harus kaya, roamer selalu menemani carry, yang lain mengawal',weak:'kalau carry miskin gold, tim kalah'}
+};
+function compKind(hs){
+  if(hs.length<2)return null;
+  const n=set=>hs.filter(h=>set.has(h.name)).length;
+  const dive=n(DIVE),poke=n(POKE)+n(EXEC),dps=n(DPS),front=hs.filter(h=>isTough(h)||ENG.has(h.name)||DISENG.has(h.name)).length;
+  const hyper=hs.some(h=>HYPER.has(h.name))&&hs.some(h=>PEEL.has(h.name)||HEALSUP.has(h.name));
+  const c=[['dive',dive>=3?dive+0.5:dive>=2?dive:0],['poke',poke>=2?poke+0.3:0],['ftb',dps>=1&&front>=2?1.6+Math.min(dps,2)*0.4+front*0.2:0],['hyper',hyper?2.2:0]].sort((a,b)=>b[1]-a[1]);
+  return c[0][1]>=2?c[0][0]:null;
+}
+function fitsComp(k,h,mine){
+  if(k==='dive')return DIVE.has(h.name);
+  if(k==='poke')return POKE.has(h.name)||EXEC.has(h.name)||DISENG.has(h.name);
+  if(k==='ftb'){if(DPS.has(h.name))return mine.filter(x=>DPS.has(x.name)).length<2&&!mine.some(x=>DPS.has(x.name)&&dmgType(x)===dmgType(h));return isTough(h)||ENG.has(h.name)||DISENG.has(h.name)}
+  if(k==='hyper')return HYPER.has(h.name)?!mine.some(x=>HYPER.has(x.name)):(PEEL.has(h.name)||HEALSUP.has(h.name)||ENG.has(h.name)||isTough(h));
+  return false;
+}
+// apa yang meng-counter tiap komposisi
+function beatsComp(k,h){
+  if(k==='dive')return DISENG.has(h.name)?'gagalkan inisiasi mereka':null;
+  if(k==='poke')return DIVE.has(h.name)?'flank / dive ke backline poke':null;
+  if(k==='ftb')return tr(h.name).includes('b')||HYPER.has(h.name)&&has(h,'Assassin')?'pick off MM/mage mereka':(SPIKE_EARLY.has(h.name)?null:null);
+  if(k==='hyper')return SPIKE_EARLY.has(h.name)&&isDealer(h)?'tekan sejak early, jangan biarkan carry mereka kaya':null;
+  return null;
+}
+const isOPRanked=n=>['Hirara','Eudora','Belerick'].includes(n);
+const isOPPro=n=>['Freya','Atlas','Fanny'].includes(n);
+const isOP=n=>state.mode==='mpl'?isOPPro(n):isOPRanked(n);
+const isStrong=n=>isOP(n)||(META[n]&&META[n][0]==='S')||(MPL[n]||0)>=70;
 
 /* ---------- scoring ---------- */
 function metaBonus(h,why,forBan){
@@ -592,6 +645,8 @@ function metaBonus(h,why,forBan){
     const t=m[0]==='S'?2:1;s+=forBan?t*0.75:t;why.push(['meta',`Tier ${m[0]} · win rate ${m[1]}%`]);
   }
   if(p){if(p[0]==='b'){s+=.6;why.push(['meta',p[1]])}else if(p[0]==='n'){s-=.6;why.push(['neg',p[1]])}}
+  const mp=MPL[h.name];
+  if(mp){const w=state.mode==='mpl'?1.5:0.6;s+=mp>=70?w:w/2;why.push(['meta',`Prioritas MPL S18: presence ${mp}%`])}
   return s;
 }
 function pickScore(h,team,lane){
@@ -605,11 +660,37 @@ function pickScore(h,team,lane){
   const front=mine.some(p=>isFront(p.h,p.lane));
   if(!front&&mine.length>=2&&isFront(h,lane)){s+=1.5;why.push(['','Tim butuh frontliner'])}
   s+=compScore(h,mine,lane,why);
+  s+=draftInsight(h,team,mine,foe,lane,why);
   // only punish a true duplicate (single-role hero of a role the team already has)
   const same=mine.filter(p=>p.h.role===h.role).length;
   if(same>=1&&['Marksman','Mage','Support'].includes(h.role)&&h.roles.length===1){s-=1.5*same;why.push(['neg','Sudah ada '+h.role])}
   s+=metaBonus(h,why,false);
   return{s,why};
+}
+function draftInsight(h,team,mine,foe,lane,why){
+  let s=0;const mh=mine.map(p=>p.h),pickNo=mh.length+1;
+  // urutan prioritas pick
+  if(pickNo<=2){
+    if(isOP(h.name)){s+=3.5;why.push(['meta','Prioritas pick awal: hero OP, amankan sebelum lawan ambil'])}
+    else if(isStrong(h.name)){s+=0.8}
+    const fl=h.lanes.filter(l=>freeLanes(team).includes(l));
+    if(fl.length>=2){s+=1.2;why.push(['',`Fleksibel (${fl.map(l=>LANES[l]).join('/')}): lane-mu belum ketahuan lawan`])}
+  }else if(pickNo>=4){
+    const c=foe.filter(e=>counters(h.name,e.name)).length;
+    if(c){s+=1.2*c;why.push(['ctr','Pick akhir: saatnya counter pick'])}
+  }
+  // komposisi tim sendiri
+  const k=compKind(mh);
+  if(k&&fitsComp(k,h,mh)){s+=1.5;why.push(['syn',`Melengkapi komposisi ${COMPS[k].label}`])}
+  // komposisi lawan
+  const fk=compKind(foe);
+  if(fk){const b=beatsComp(fk,h);if(b){s+=1.5;why.push(['ctr',`Lawan main ${COMPS[fk].label}: ${b}`])}}
+  // jungler & mid sama-sama butuh farming
+  const farmJ=mine.find(p=>p.lane==='J'&&FARM_J.has(p.h.name)),farmM=mine.find(p=>p.lane==='M'&&FARM_M.has(p.h.name));
+  if((lane==='M'&&farmJ&&FARM_M.has(h.name))||(lane==='J'&&farmM&&FARM_J.has(h.name))){s-=1.5;why.push(['neg',`${(farmJ||farmM).h.name} sudah butuh farming; jungler & mid jangan sama-sama farming`])}
+  // satu hyper carry cukup
+  if(HYPER.has(h.name)&&mh.some(x=>HYPER.has(x.name))&&k==='hyper'){s-=1;why.push(['neg','Sudah ada hyper carry; gold tidak cukup untuk dua'])}
+  return s;
 }
 function banScore(h,team){
   const foe=other(team),mine=heroesOf(team),foeH=heroesOf(foe);
@@ -619,6 +700,15 @@ function banScore(h,team){
   const t=tr(h.name);
   if(t.includes('m')&&t.includes('b')){s+=1;why.push(['','Dash + burst, sulit dihadapi di ranked'])}
   s+=metaBonus(h,why,true);
+  if(isOP(h.name)){
+    const ops=allHeroes().filter(x=>isOP(x.name)&&canUse(x.name)).length; // OP yang masih lepas (yang terlihat)
+    if(team==='B'){
+      if(ops>1){s+=4;why.unshift(['meta',`First pick: ban hero OP sampai tersisa 1 (sekarang ${ops} lepas), biar cuma kamu yang dapat`])}
+      else{s-=4;why.unshift(['',`First pick: biarkan OP terakhir lepas, ambil di pick pertama`])}
+    }else{
+      s-=3;why.unshift(['',`Second pick: biarkan 3 OP lepas. Lawan ambil 1, kamu ambil 2`])
+    }
+  }else if(team==='R'&&isStrong(h.name)){why.push(['','Second pick: lebih baik ban counter hero yang mau kamu pakai'])}
   return{s,why};
 }
 
@@ -688,11 +778,13 @@ function renderTeam(team){
     // komposisi (video HEROISGOD)
     const c=compOf(ps);
     if(ps.length>=3&&!c.tough.length)notes.push(['warn','Komposisi lembek: belum ada hero tebal, minimal 1']);
-    ps.forEach(p=>{if((p.lane==='R'||p.lane==='E')&&!isTough(p.h)&&p.h.role!=='Support')notes.push(['warn',`${p.h.name} di ${LANE_FULL[p.lane]} kurang tebal`])});
+    ps.forEach(p=>{if((p.lane==='R'||p.lane==='E')&&!laneOK(p.h,p.lane))notes.push(['warn',`${p.h.name} di ${LANE_FULL[p.lane]} kurang tebal`])});
     if(c.mag+c.phy>=2)notes.push([c.mag>=3&&!c.phy||c.phy>=4&&!c.mag?'warn':'',`Damage: ${c.phy} fisik · ${c.mag} magic`+(c.mag>=3&&!c.phy?' (kebanyakan magic, musuh tinggal beli Magic Defense)':c.phy>=4&&!c.mag?' (kebanyakan fisik, musuh tinggal beli Physical Defense)':'')]);
     const spTot=c.sp.E+c.sp.M+c.sp.L;
     if(spTot>=2){const miss=['E','M','L'].filter(k=>!c.sp[k]).map(k=>SPIKE_TXT[k]);
       notes.push([miss.length&&ps.length>=4?'warn':'',`Waktu kuat (perkiraan): Early ${c.sp.E} · Mid ${c.sp.M} · Late ${c.sp.L}`+(miss.length&&ps.length>=4?` (belum ada hero kuat di ${miss.join(' & ')} game)`:'')])}
+    const ck=compKind(ps.map(p=>p.h));
+    if(ck)notes.push(['good',`Komposisi ${COMPS[ck].label}. Kondisi menang: ${COMPS[ck].win}. Waspada: ${COMPS[ck].weak}`]);
     const missR=CLASSIC.filter(r=>!c.roles[r]);
     if(ps.length===5&&missR.length)notes.push(['','Komposisi klasik 1 MM · 1 Fighter · 1 Assassin · 1 Mage · 1 Tank, kurang: '+missR.join(', ')]);
   }
@@ -758,7 +850,7 @@ function renderRecs(){
   let top=scored.slice(0,8),extra='';
   if(s.k==='pick'&&!lane&&free.length>1){
     const per=[];free.forEach(l=>{const b=scored.find(x=>x.lane===l&&!per.includes(x));if(b)per.push(b)});
-    top=per.concat(scored.filter(x=>!per.includes(x))).slice(0,Math.max(8,per.length));
+    per.sort((a,b)=>b.s-a.s);top=per.concat(scored.filter(x=>!per.includes(x))).slice(0,Math.max(8,per.length));
   }
   if(s.k==='pick'&&foe.length){
     // make sure every enemy hero that is not yet answered has a counter in the list
