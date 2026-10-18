@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}</style>
+</head>
+<body>
+<title>Draft Pick MLBB</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: arena — First pick (blue) left, center (recommendations, counter board, hero pool), Second pick (red) right; draft order strip on top */
+:root{
+  --bg:#eceff4; --surface:#ffffff; --sunk:#f4f6f9; --ink:#141923; --muted:#596277; --line:#d5dae4;
+  --blue:#2160c4; --blue-soft:#e3ecfa; --red:#c4313a; --red-soft:#fae5e6; --turn:#b4841a; --turn-soft:#f8efd9; --good:#2f9370; --good-soft:#e1f3ec;
+  --buff:#1f8a4c; --nerf:#c4313a; --adj:#8a6d1c;
+  --r-tank:#5d7290; --r-fighter:#b4602a; --r-assassin:#7a3fa8; --r-mage:#2f74c0; --r-marksman:#b88a1c; --r-support:#2f9370; --r-other:#7b8394;
+  --f-display:"Saira Condensed","Arial Narrow",sans-serif;
+  --f-body:"Barlow",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1118; --surface:#171b25; --sunk:#12161e; --ink:#e7eaf1; --muted:#8c94a7; --line:#2a3141;
+  --blue:#5a93f0; --blue-soft:#18233a; --red:#ee5b63; --red-soft:#33191d; --turn:#e3b94c; --turn-soft:#2b2414; --good:#4fc097; --good-soft:#132b23;
+  --buff:#4cc883; --nerf:#ee5b63; --adj:#e3b94c;
+  --r-tank:#8ea2c0; --r-fighter:#e08a50; --r-assassin:#b27ae0; --r-mage:#5d9ce6; --r-marksman:#e0b44a; --r-support:#4fc097; --r-other:#9aa1b1;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1118; --surface:#171b25; --sunk:#12161e; --ink:#e7eaf1; --muted:#8c94a7; --line:#2a3141;
+  --blue:#5a93f0; --blue-soft:#18233a; --red:#ee5b63; --red-soft:#33191d; --turn:#e3b94c; --turn-soft:#2b2414; --good:#4fc097; --good-soft:#132b23;
+  --buff:#4cc883; --nerf:#ee5b63; --adj:#e3b94c;
+  --r-tank:#8ea2c0; --r-fighter:#e08a50; --r-assassin:#b27ae0; --r-mage:#5d9ce6; --r-marksman:#e0b44a; --r-support:#4fc097; --r-other:#9aa1b1;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 32px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--turn);outline-offset:2px}
+
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font:800 34px/1 var(--f-display);letter-spacing:.01em;margin:0;text-transform:uppercase}
+h1 small{display:block;font:500 13px/1.3 var(--f-body);letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:1px solid var(--line);background:var(--surface);padding:7px 12px;border-radius:6px;font-weight:600;font-size:14px}
+.btn:hover{border-color:var(--muted)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.on{border-color:var(--turn);color:var(--turn)}
+
+.settings{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
+.group{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.group .label{margin-right:4px}
+.mode{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 11px;font-weight:600;font-size:13.5px;display:flex;flex-direction:column;align-items:flex-start;line-height:1.15}
+.mode small{font-weight:400;font-size:11.5px;color:var(--muted)}
+.mode[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.mode.B[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue);color:var(--blue)}
+.mode.R[aria-pressed="true"]{border-color:var(--red);box-shadow:inset 0 0 0 1px var(--red);color:var(--red)}
+.mode-note{font-size:12.5px;color:var(--muted);flex-basis:100%}
+
+.banner{background:var(--sunk);border:1px dashed var(--line);border-radius:8px;padding:8px 12px;font-size:14px;color:var(--muted)}
+
+/* patch & meta badges */
+.pb{font:700 12px/1 var(--f-body);display:inline-grid;place-items:center;width:17px;height:17px;border-radius:4px;color:#fff;flex:none}
+.pb.b{background:var(--buff)} .pb.n{background:var(--nerf)} .pb.a{background:var(--adj);font-size:13px}
+.tier{font:800 11px/1 var(--f-display);display:inline-grid;place-items:center;min-width:17px;height:17px;border-radius:4px;border:1px solid var(--turn);color:var(--turn);padding:0 3px}
+.tier.S{background:var(--turn);color:var(--surface)}
+.keyrow{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:12.5px;color:var(--muted)}
+.keyrow span{display:inline-flex;align-items:center;gap:5px}
+
+/* turn bar */
+.turnbar{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.turnline{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.turntext{font:700 22px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.02em}
+.turntext .who.B{color:var(--blue)} .turntext .who.R{color:var(--red)}
+.turnhint{font-size:13px;color:var(--muted);margin-top:2px}
+.phase{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.timer{font:500 20px var(--f-mono);font-variant-numeric:tabular-nums;min-width:3ch;text-align:right}
+.timer.low{color:var(--red)}
+.strip{display:grid;grid-template-columns:repeat(var(--n,20),minmax(0,1fr));gap:3px}
+.cell{height:30px;border-radius:4px;display:grid;place-items:center;font:700 11px/1 var(--f-display);letter-spacing:.03em;border:1px solid transparent;position:relative;overflow:hidden}
+.cell.B{background:var(--blue-soft);color:var(--blue)} .cell.R{background:var(--red-soft);color:var(--red)}
+.cell.ban::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:currentColor;opacity:.35}
+.cell.done.B{background:var(--blue);color:#fff} .cell.done.R{background:var(--red);color:#fff}
+.cell.done.ban{opacity:.6}
+.cell.gap{margin-left:6px}
+.cell.now{border-color:var(--turn);box-shadow:0 0 0 2px var(--turn)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted)}
+
+/* main grid */
+.arena{display:grid;grid-template-columns:262px minmax(0,1fr) 262px;grid-template-areas:"b pool r" "recs recs recs";gap:14px;align-items:start}
+.team.B{grid-area:b}.team.R{grid-area:r}.poolp{grid-area:pool}.recs{grid-area:recs}
+.team{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:12px;border-top:4px solid var(--c)}
+.team.B{--c:var(--blue);--soft:var(--blue-soft)} .team.R{--c:var(--red);--soft:var(--red-soft)}
+.team.active{box-shadow:0 0 0 2px var(--turn)}
+.thead{display:flex;flex-direction:column;gap:3px}
+.tline{display:flex;align-items:center;gap:6px}
+.tname{border:none;background:transparent;font:800 22px/1.1 var(--f-display);text-transform:uppercase;color:var(--c);width:100%;min-width:0;padding:2px 0;border-bottom:1px dashed transparent}
+.tname:hover,.tname:focus{border-bottom-color:var(--line);outline:none}
+.fp{font:700 11px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--c)}
+.you{font:700 10.5px var(--f-display);letter-spacing:.08em;text-transform:uppercase;background:var(--c);color:#fff;border-radius:4px;padding:2px 6px;white-space:nowrap}
+.label{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.bans{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.bslot{aspect-ratio:1;max-width:100%;border-radius:6px;background:var(--sunk);border:1px dashed var(--line);display:grid;place-items:center;font:700 13px var(--f-display);color:var(--muted);position:relative;overflow:hidden}
+.bslot.filled{border-style:solid;color:var(--ink)}
+.bslot.filled::after{content:"";position:absolute;inset:-20%;background:linear-gradient(45deg,transparent 48%,var(--red) 48%,var(--red) 52%,transparent 52%);opacity:.7}
+.bslot.skip{border-style:solid;color:var(--muted);font-size:18px}
+.bslot.hid{background:repeating-linear-gradient(135deg,var(--sunk) 0 5px,var(--line) 5px 6px);border-style:solid;color:var(--muted)}
+.bslot.now{border:2px solid var(--turn)}
+.bnames{font-size:11px;color:var(--muted);line-height:1.3;min-height:1.3em}
+.picks{display:flex;flex-direction:column;gap:6px}
+.pslot{display:grid;grid-template-columns:58px 38px minmax(0,1fr);align-items:center;gap:8px;padding:6px 8px;border-radius:7px;background:var(--sunk);border:1px solid transparent;min-height:54px;text-align:left;width:100%}
+button.pslot:hover{border-color:var(--turn)}
+.pslot.sel{border:2px solid var(--turn);background:var(--surface);padding:5px 7px}
+.plane{font:800 12.5px/1.05 var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--c)}
+.plane small{display:block;font:500 10.5px var(--f-body);letter-spacing:0;text-transform:none;color:var(--muted);margin-top:2px}
+.pname{font-weight:600;font-size:15px;display:flex;align-items:center;gap:5px;min-width:0}
+.pname span.t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pname.empty{color:var(--muted);font-weight:400;font-style:italic}
+.prole{font-size:12px;color:var(--muted)}
+.prole.warn{color:var(--turn)}
+.mono{width:38px;height:38px;border-radius:7px;display:grid;place-items:center;font:800 15px/1 var(--f-display);color:#fff;background:var(--rc,var(--r-other));letter-spacing:.02em;flex:none}
+.mono.sm{width:28px;height:28px;font-size:11.5px;border-radius:5px}
+.mono.ghost{background:transparent;border:1px dashed var(--line)}
+.comp{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:8px}
+.needs{display:flex;flex-wrap:wrap;gap:4px}
+.lchip{font:700 11px var(--f-display);letter-spacing:.05em;text-transform:uppercase;padding:3px 7px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.lchip.ok{background:var(--c);border-color:var(--c);color:#fff}
+.lchip.miss{border-color:var(--turn);color:var(--turn)}
+.notes{margin:0;padding:0;list-style:none;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.notes li{padding-left:14px;position:relative}
+.notes li::before{content:"";position:absolute;left:2px;top:.55em;width:6px;height:6px;border-radius:50%;background:var(--muted)}
+.notes li.warn::before{background:var(--turn)} .notes li.good::before{background:var(--good)}
+.syn-meter{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.syn-bar{flex:1;height:6px;border-radius:3px;background:var(--sunk);border:1px solid var(--line);overflow:hidden}
+.syn-bar span{display:block;height:100%;background:var(--good)}
+
+/* center column */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.recs{background:var(--turn-soft);border-color:var(--turn)}
+.p-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px}
+.p-title{font:800 19px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.02em}
+.p-title .B{color:var(--blue)} .p-title .R{color:var(--red)}
+.p-sub{font-size:12.5px;color:var(--muted)}
+.rec-group{display:flex;flex-direction:column;gap:8px}
+.rec-group h3{margin:0;font:800 14px/1.1 var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.rec-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+.rec{display:flex;flex-direction:column;gap:7px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+.rec:hover{border-color:var(--turn)}
+.rec.top{border-color:var(--turn);box-shadow:inset 3px 0 0 var(--turn)}
+.rhead{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:9px;align-items:center}
+.rec .rn{font-weight:600;font-size:15px;line-height:1.2;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.rec .rr{font-size:11.5px;color:var(--muted)}
+.rec .score{font:500 12px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums;align-self:start}
+.rec .rank{font:800 12px var(--f-display);color:var(--turn)}
+.rec .flag{font:700 10px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--good);border:1px solid var(--good);border-radius:3px;padding:1px 4px}
+.rec .flag.syn{color:var(--blue);border-color:var(--blue)}
+.lanepill{font:800 11px var(--f-display);letter-spacing:.06em;text-transform:uppercase;background:var(--turn);color:var(--surface);border-radius:3px;padding:1px 5px}
+.rrows{display:grid;grid-template-columns:62px minmax(0,1fr);gap:3px 8px;margin:0;font-size:12.5px;line-height:1.35;border-top:1px dashed var(--line);padding-top:6px}
+.rrows dt{font:700 10.5px/1.6 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rrows dd{margin:0;min-width:0}
+.rrows dd.ctr{color:var(--good);font-weight:600} .rrows dd.syn{color:var(--blue)} .rrows dd.neg{color:var(--red)} .rrows dd.meta{color:var(--turn)} .rrows dd.none{color:var(--muted);font-style:italic}
+.rbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between}
+.more{align-self:flex-start}
+.threats{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+.trow{display:flex;flex-wrap:wrap;align-items:center;gap:5px 6px;font-size:13px}
+.trow .who{font-weight:600;display:inline-flex;align-items:center;gap:4px;min-width:0}
+.trow .arrow{color:var(--muted)}
+.trow.ok{color:var(--good);font-weight:600}
+.tchip{border:1px solid var(--line);background:var(--sunk);border-radius:999px;padding:2px 9px;font-size:12.5px;font-weight:600}
+.tchip:hover:not(:disabled){border-color:var(--good);color:var(--good)}
+.tchip:disabled{opacity:.45;text-decoration:line-through;cursor:default}
+.trow .tipx{flex-basis:100%;font-size:12px;color:var(--muted);padding-left:2px}
+.avoid{font-size:12.5px;color:var(--red)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:6px;max-height:520px;overflow-y:auto;padding:2px}
+.filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.search{flex:1 1 200px;min-width:0;border:1px solid var(--line);background:var(--sunk);border-radius:6px;padding:8px 10px}
+.mic{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:7px 11px;font-weight:600;font-size:14px}
+.mic svg{width:16px;height:16px;fill:currentColor}
+.mic.live{border-color:var(--red);color:var(--red);animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 4px var(--red-soft)}}
+.voicebar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;background:var(--turn-soft);border:1px solid var(--turn);border-radius:8px;padding:7px 9px}
+.voicebar .vh{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px 3px 4px;font-weight:600}
+.voicebar .vh:disabled{opacity:.45;text-decoration:line-through;cursor:default}
+.voicebar .vh .mono{width:22px;height:22px;font-size:10px;border-radius:50%}
+.voicemsg{font-size:12.5px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:600;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.hero{position:relative;border:1px solid var(--line);background:var(--sunk);border-radius:8px;padding:9px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;min-width:0;transition:transform .08s,border-color .08s}
+.hero:hover:not(:disabled){border-color:var(--turn);transform:translateY(-1px)}
+.hero .hn{font-size:12.5px;font-weight:600;line-height:1.15;width:100%;overflow-wrap:anywhere}
+.hero .hl{font-size:10.5px;color:var(--muted);letter-spacing:.02em}
+.hero:disabled{opacity:.32;cursor:not-allowed}
+.hero .tag{font:700 10px var(--f-display);letter-spacing:.06em;text-transform:uppercase}
+.hero .tag.B{color:var(--blue)} .hero .tag.R{color:var(--red)}
+.hero .corner-l{position:absolute;top:4px;left:4px} .hero .corner-r{position:absolute;top:4px;right:4px}
+.hero.noban .x{width:38px;height:38px;border-radius:7px;border:2px solid var(--muted);display:grid;place-items:center;font:800 24px/1 var(--f-display);color:var(--muted)}
+.hero.noban{border-style:dashed}
+.empty-pool{color:var(--muted);font-size:14px;padding:16px 4px}
+.hint{font-size:12px;color:var(--muted)}
+.done-msg{font:700 18px var(--f-display);text-transform:uppercase;color:var(--good)}
+.src{font-size:12px;color:var(--muted)}
+.src a{color:inherit}
+
+@media (max-width:940px){
+  .arena{grid-template-columns:1fr 1fr;grid-template-areas:"b r" "pool pool" "recs recs"}
+  .grid{max-height:420px}
+}
+@media (max-width:540px){
+  .arena{gap:8px}
+  .team{padding:9px;gap:9px}
+  .tname{font-size:18px}
+  .pslot{grid-template-columns:30px minmax(0,1fr);row-gap:3px;padding:6px}
+  .pslot .plane{grid-column:1/-1}
+  .pslot .plane small{display:inline;margin-left:4px}
+  .pslot .mono{width:30px;height:30px;font-size:12px}
+  .pname{font-size:13.5px}
+  .bslot{font-size:10px}
+  .strip{gap:2px}.cell{height:24px;font-size:9px}.cell.gap{margin-left:3px}
+  h1{font-size:28px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1><small>Asisten draft · ranked &amp; turnamen</small>Draft Pick MLBB</h1>
+    <div class="actions">
+      <button class="btn" id="undo">Batal langkah</button>
+      <button class="btn" id="timerBtn" aria-pressed="false">Timer 30 dtk: mati</button>
+      <button class="btn" id="reset">Draft baru</button>
+    </div>
+  </header>
+
+  <div class="settings">
+    <div class="group" id="modes"></div>
+    <div class="group" id="sides"></div>
+    <div class="mode-note" id="modeNote"></div>
+  </div>
+
+  <div class="keyrow">
+    <span><i class="pb b">▲</i> Buff</span>
+    <span><i class="pb n">▼</i> Nerf</span>
+    <span><i class="pb a">∿</i> Disesuaikan / rework</span>
+    <span><i class="tier S">S</i><i class="tier">A</i> Tier meta</span>
+    <span class="src">Patch 2.2.16 (16 Sep 2026) &amp; 2.2.16a (14 Okt 2026) · tier Season 42, data 16 Okt 2026 dari <a href="https://mlbbhub.com/tier-list" target="_blank" rel="noopener">MLBBHub</a></span>
+  </div>
+
+  <div class="banner" id="sampleBanner" hidden>Ini draft contoh. Tekan <b>Draft baru</b> untuk mulai dari nol, atau lanjutkan dari giliran sekarang.</div>
+
+  <section class="turnbar" aria-live="polite">
+    <div class="turnline">
+      <div>
+        <div class="phase" id="phase"></div>
+        <div class="turntext" id="turnText"></div>
+        <div class="turnhint" id="turnHint"></div>
+      </div>
+      <div class="timer" id="timer" hidden>30</div>
+    </div>
+    <div class="strip" id="strip"></div>
+    <div class="legend"><span>Kotak bergaris bawah = ban</span><span>Kotak polos = pick</span><span>Jarak antar kotak = pergantian fase</span></div>
+  </section>
+
+  <main class="arena">
+    <section class="team B" id="teamB"></section>
+    <section class="panel poolp">
+      <div class="filters">
+        <input class="search" id="search" type="search" placeholder="Cari atau ucapkan hero… mis. &quot;hirara aulus eudora&quot;" autocomplete="off" enterkeyhint="search">
+        <button class="mic" id="mic" type="button" aria-pressed="false" title="Cari hero dengan suara"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg><span id="micTxt">Suara</span></button>
+      </div>
+      <div class="voicebar" id="voiceBar" hidden></div>
+      <div class="voicemsg" id="voiceMsg" hidden></div>
+      <div class="chips" id="roleChips"></div>
+      <div class="chips" id="laneChips"></div>
+      <div class="grid" id="grid"></div>
+      <div class="hint">Hero belum ada di daftar? Ketik namanya lalu Enter untuk menambahkannya.</div>
+    </section>
+    <section class="team R" id="teamR"></section>
+    <section class="panel recs" id="recs"></section>
+  </main>
+</div>
+
+<script>
+/* ---------- hero data (lanes: G gold, E exp, M mid, J jungle, R roam) ---------- */
+const RAW=`Miya|Marksman|G;Balmond|Fighter|JE;Saber|Assassin|JR;Alice|Mage/Tank|EJ;Nana|Mage|MR;Tigreal|Tank|R;Alucard|Fighter/Assassin|JE;Karina|Assassin|J;Akai|Tank|RJ;Franco|Tank|R;Bane|Fighter/Mage|JEM;Bruno|Marksman|G;Clint|Marksman|GE;Rafaela|Support|R;Eudora|Mage|M;Zilong|Fighter/Assassin|EJ;Fanny|Assassin|J;Layla|Marksman|G;Minotaur|Tank/Support|R;Lolita|Support/Tank|R;Hayabusa|Assassin|J;Freya|Fighter|EJ;Gord|Mage|M;Natalia|Assassin|RJ;Kagura|Mage|M;Chou|Fighter|ER;Sun|Fighter|JEG;Alpha|Fighter|EJ;Ruby|Fighter|ER;Yi Sun-shin|Marksman/Assassin|JG;Moskov|Marksman|G;Johnson|Tank/Support|R;Cyclops|Mage|M;Estes|Support|R;Hilda|Fighter/Tank|RE;Aurora|Mage|M;Lapu-Lapu|Fighter|E;Vexana|Mage|M;Roger|Fighter/Marksman|JG;Karrie|Marksman|G;Gatotkaca|Tank/Fighter|RE;Harley|Assassin/Mage|JM;Irithel|Marksman|G;Grock|Tank/Fighter|R;Argus|Fighter|EG;Odette|Mage|M;Lancelot|Assassin|J;Diggie|Support|R;Hylos|Tank|R;Zhask|Mage|M;Helcurt|Assassin|J;Pharsa|Mage|M;Lesley|Marksman/Assassin|G;Jawhead|Fighter|RE;Angela|Support|R;Gusion|Assassin|JM;Valir|Mage|M;Martis|Fighter|JE;Uranus|Tank|ER;Hanabi|Marksman|G;Chang'e|Mage|M;Kaja|Support|R;Selena|Assassin/Mage|RM;Aldous|Fighter|E;Claude|Marksman|G;Vale|Mage|M;Leomord|Fighter|JE;Lunox|Mage|M;Hanzo|Assassin|J;Belerick|Tank|RE;Kimmy|Marksman/Mage|GM;Thamuz|Fighter|EJ;Harith|Mage|GM;Minsitthar|Fighter|RE;Kadita|Mage/Assassin|MR;Faramis|Support/Mage|RM;Badang|Fighter|EG;Khufra|Tank|R;Granger|Marksman|GJ;Guinevere|Fighter|EJ;Esmeralda|Mage/Tank|E;Terizla|Fighter/Tank|EG;X.Borg|Fighter|E;Ling|Assassin|J;Dyrroth|Fighter|EG;Lylia|Mage|M;Baxia|Tank|JR;Masha|Fighter/Tank|E;Wanwan|Marksman|G;Silvanna|Fighter|E;Cecilion|Mage|M;Carmilla|Support/Tank|R;Atlas|Tank|R;Popol and Kupa|Marksman|G;Yu Zhong|Fighter|E;Luo Yi|Mage|M;Benedetta|Assassin/Fighter|EJ;Khaleed|Fighter|E;Barats|Tank/Fighter|JE;Brody|Marksman|G;Yve|Mage|M;Mathilda|Support/Assassin|R;Paquito|Fighter/Assassin|E;Gloo|Tank|ER;Beatrix|Marksman|G;Phoveus|Fighter|E;Natan|Marksman|G;Aulus|Fighter|EJ;Aamon|Assassin|J;Valentina|Mage|M;Edith|Tank/Marksman|RE;Floryn|Support|R;Yin|Fighter/Assassin|J;Melissa|Marksman|G;Xavier|Mage|M;Julian|Assassin/Fighter|J;Fredrinn|Fighter/Tank|JE;Joy|Assassin|J;Novaria|Mage|M;Arlott|Fighter/Assassin|ER;Ixia|Marksman|G;Nolan|Assassin|J;Cici|Fighter|E;Chip|Support/Tank|R;Zhuxin|Mage|M;Suyou|Assassin/Fighter|J;Lukas|Fighter|EJ;Kalea|Support/Fighter|R;Zetian|Mage|M;Obsidia|Marksman|G;Sora|Fighter/Assassin|EJ;Marcel|Support|R;Hirara|Assassin|J`;
+const LANES={G:'Gold',E:'EXP',M:'Mid',J:'Jungle',R:'Roam'};
+const LANE_FULL={G:'Gold lane',E:'EXP lane',M:'Mid lane',J:'Jungle',R:'Roam'};
+const SLOT_ORDER=['G','M','R','J','E'];
+const ROLES=['Tank','Fighter','Assassin','Mage','Marksman','Support'];
+const ROLE_ID={Tank:'tank',Fighter:'fighter',Assassin:'assassin',Mage:'mage',Marksman:'marksman',Support:'support',Lainnya:'other'};
+const BASE=RAW.split(';').map(s=>{const[n,r,l]=s.split('|');const rs=r.split('/');return{name:n,role:rs[0],roles:rs,lanes:l.split('')}}).sort((a,b)=>a.name.localeCompare(b.name));
+
+/* ---------- patch & meta (sumber: MLBBHub / MLBBDex, Okt 2026) ---------- */
+const PATCH={
+ Aulus:['n','Nerf 2.2.16a: sustain dikurangi (sempat buff di 2.2.16)'],
+ Hirara:['n','Nerf 2.2.16a: skill kebal lebih jarang bisa dipakai'],
+ Eudora:['n','Nerf 2.2.16a: damage ult sedikit turun'],
+ Rafaela:['n','Nerf 2.2.16a: cooldown skill 1 & 2 lebih lama'],
+ Kalea:['b','Buff 2.2.16 & 2.2.16a: lebih kuat solo kill backline'],
+ Masha:['a','Rework 2.2.16: tiga bar HP, skill 2 & ult didesain ulang'],
+ Bruno:['a','Rework 2.2.16: slide jadi skill mobilitas, ult jarak lebih jauh'],
+ Odette:['a','Disesuaikan 2.2.16'],Sun:['a','Disesuaikan 2.2.16'],Marcel:['a','Disesuaikan 2.2.16'],Kadita:['a','Disesuaikan 2.2.16'],Hylos:['a','Disesuaikan 2.2.16'],
+ Zilong:['n','Nerf 2.2.16'],Melissa:['n','Nerf 2.2.16'],Miya:['n','Nerf 2.2.16'],Hanabi:['n','Nerf 2.2.16'],'Yi Sun-shin':['n','Nerf 2.2.16'],Paquito:['n','Nerf 2.2.16']
+};
+['Argus','Aldous','Lukas','Akai','Cici','Alpha','Kagura','Edith','Karina','Kaja'].forEach(n=>PATCH[n]=['b','Buff 2.2.16']);
+// [tier, winrate %, banrate %]
+const META={Masha:['S',60.3,33],Aulus:['S',58.5,43.6],Marcel:['S',58.2,33.1],Rafaela:['S',57.9,19.1],Argus:['S',56.0],Minotaur:['S',55.0,7.9],Khufra:['S',54.7],'Popol and Kupa':['S',54.7],Gloo:['S',54.1,38.2],Floryn:['S',54.1],Valir:['S',53.9],Carmilla:['S',53.8,15.1],Obsidia:['S',53.7,20.9],
+ Lolita:['A',54.0],Diggie:['A',53.6],Bruno:['A',53.3],Gord:['A',52.9],Lukas:['A',52.8,38],Hirara:['A',52.7,68.7],Estes:['A',52.7,43.2],Benedetta:['A',52.7],Edith:['A',52.6],Irithel:['A',52.5],Ling:['A',52.4],Sun:['A',52.4,21.4],Zhask:['A',52.3],Hanabi:['A',52.2],Atlas:['A',52.2],Belerick:['A',52.1,55.9],Barats:['A',51.9],Kagura:['A',51.8],Minsitthar:['A',51.6],Kadita:['A',51.3],Eudora:['A',51.2,58.8],Zetian:['A',51.0]};
+
+/* ---------- traits → counters ---------- */
+const TRAIT_LIST={
+ m:'Fanny Ling Lancelot Gusion Hayabusa Joy Wanwan Benedetta Hirara Nolan Hanzo Karina Harley Alucard Chou Paquito Aamon Kagura Julian Suyou Arlott Cici Sora Guinevere Natalia Saber Helcurt Harith Mathilda Zilong Khaleed Freya Alpha Lapu-Lapu Yin Selena Martis Aulus',
+ h:'Estes Floryn Rafaela Angela Esmeralda Uranus Alice Yu Zhong Ruby Thamuz Fredrinn Alucard Balmond Lukas Cici Kalea Masha X.Borg Terizla Arlott Hylos Aulus',
+ t:'Tigreal Franco Minotaur Johnson Lolita Hylos Grock Atlas Khufra Belerick Gatotkaca Baxia Gloo Barats Uranus Edith Fredrinn Akai Hilda Marcel Chip Terizla Masha Esmeralda Carmilla',
+ c:'Tigreal Atlas Lolita Khufra Franco Johnson Minotaur Chou Kaja Grock Gatotkaca Marcel Hylos Kalea Edith Ruby Akai Carmilla Barats Gloo Belerick',
+ u:'Odette Pharsa Yve Chang\'e',
+ b:'Gusion Karina Lancelot Saber Natalia Helcurt Hayabusa Aamon Selena Eudora Harley Hirara Nolan Joy Fanny Ling Hanzo Suyou',
+ U:'Carmilla Belerick Atlas Tigreal Lolita Pharsa Odette Lunox Johnson Grock Gatotkaca Minotaur Khufra Aurora Yve Kagura Chou Kaja Franco Lylia Faramis Gord Xavier Vale Cecilion Novaria',
+ p:'Pharsa Lesley Granger Irithel Layla Moskov Brody Beatrix Kimmy Novaria Xavier Natan Melissa Miya Hanabi Bruno Clint Karrie Ixia Obsidia',
+ d:'Angela Mathilda Johnson X.Borg Edith'
+};
+function splitNames(s){const multi=['Yu Zhong','Popol and Kupa','Yi Sun-shin','Luo Yi','X.Borg'];const out=[];multi.forEach(m=>{if(s.includes(m)){out.push(m);s=s.replace(m,' ')}});return out.concat(s.split(' ').filter(Boolean))}
+const TRAITS={};
+for(const[k,v] of Object.entries(TRAIT_LIST))splitNames(v).forEach(n=>{TRAITS[n]=(TRAITS[n]||'')+k});
+BASE.forEach(h=>{if((h.role==='Marksman'||h.role==='Mage')&&!h.roles.includes('Tank')&&!['Esmeralda','Alice'].includes(h.name))TRAITS[h.name]=(TRAITS[h.name]||'')+'s'});
+['Estes','Floryn','Angela','Rafaela'].forEach(n=>TRAITS[n]+='s');
+// immobile backline: squishy carry without dash
+Object.keys(TRAITS).forEach(n=>{const t=TRAITS[n];if(t.includes('s')&&!t.includes('m'))TRAITS[n]+='i'});
+
+const BY_TRAIT={
+ m:[['Khufra','anti-dash, hentikan lompatannya'],['Minsitthar','ult anti-dash'],['Phoveus','ult mengejar setiap dash'],['Kaja','suppress, kunci di tempat'],['Saber','ult lock target'],['Chou','CC beruntun'],['Franco','hook & suppress'],['Eudora','stun instan saat dia masuk'],['Aurora','freeze & CC area'],['Clint','jaring memperlambat dash']],
+ b:[['Nana','Molina mengubahnya jadi hewan saat masuk'],['Belerick','taunt memaksa dia memukul Belerick'],['Kaja','suppress sebelum dia burst'],['Khufra','CC area saat dia masuk'],['Diggie','ult selamatkan carry dari burst'],['Angela','shield & ult nempel ke carry'],['Chou','peel untuk carry']],
+ h:[['Baxia','pasif anti-heal'],['Karrie','true damage % HP'],['Dyrroth','burst + kurangi armor']],
+ t:[['Karrie','true damage % HP'],['Dyrroth','kurangi armor'],['Lunox','penetrasi magic tinggi'],['X.Borg','true damage dari Fire Missiles']],
+ s:[['Saber','ult lock backline'],['Natalia','masuk diam-diam ke backline'],['Helcurt','silence + gelapkan peta'],['Lancelot','dive backline, sulit dikunci'],['Hayabusa','split push & pick-off'],['Karina','burst ke target tipis'],['Gusion','burst cepat dari mid'],['Harley','burst & kabur dari mid']],
+ c:[['Diggie','ult purify satu tim'],['Valentina','salin ult CC-nya untuk balas engage'],['Martis','tahan CC saat skill'],['Valir','dorong & slow, jaga jarak']],
+ U:[['Valentina','salin ult-nya dan pakai balik ke tim lawan'],['Faramis','ult membangkitkan tim setelah kena combo ult'],['Lylia','ult memundurkan Lylia ke posisi aman sebelum combo'],['Diggie','ult purify membebaskan tim dari CC ult']],
+ p:[['Lolita','perisai menahan semua proyektil'],['Natalia','sergap dari semak sebelum dia poke'],['Hayabusa','kejar poke yang diam di belakang']],
+ d:[['Esmeralda','menyerap shield lawan jadi shield sendiri']],
+ i:[['Franco','hook carry yang tidak punya dash'],['Kaja','tarik carry diam ke tengah tim'],['Natalia','sergap carry yang tidak bisa kabur']],
+ u:[['Kaja','batalkan ult dengan suppress'],['Franco','hook batalkan ult'],['Eudora','stun instan'],['Chou','tendang keluar ult']]
+};
+const TIPS={
+ U:'Jangan bergerombol saat ult-nya siap; pancing ult-nya keluar dulu baru war.',
+ p:'Jangan berdiri lurus di jalur skill-nya; serang dari samping lewat semak.',
+ d:'Item anti-shield / burst cepat sebelum shield aktif.',
+ h:'Item anti-heal: Sea Halberd, Dominance Ice, Necklace of Durance.',
+ t:'Item tembus tank: Malefic Roar, Divine Glaive, Demon Hunter Sword.',
+ b:'Item bertahan: Athena\'s Shield, Antique Cuirass, Winter Crown.',
+ m:'Simpan CC sampai dia selesai dash; Winter Crown bisa mengelak burst-nya.',
+ c:'Spell Purify atau Tough Boots mengurangi CC-nya.',
+ u:'Simpan CC instan untuk membatalkan ult-nya.',
+ s:'Kejar dia lebih dulu, damage tinggi tapi tipis.'
+};
+const CTR={
+ Fanny:[['Khufra','anti-dash'],['Kaja','suppress'],['Saber','lock ult'],['Franco','hook & suppress']],
+ Ling:[['Khufra','anti-dash'],['Kaja','suppress'],['Saber','lock ult'],['Chou','CC beruntun']],
+ Lancelot:[['Khufra','anti-dash'],['Kaja','suppress'],['Chou','CC beruntun'],['Minsitthar','anti-dash']],
+ Hanzo:[['Kaja','suppress tubuh asli'],['Franco','hook saat dia lengah'],['Chou','CC beruntun'],['Saber','lock ult']],
+ Hirara:[['Kaja','suppress'],['Khufra','anti-dash'],['Saber','lock ult']],
+ Aulus:[['Baxia','anti-heal'],['Karrie','true damage'],['Valir','kite & slow']],
+ Masha:[['Karrie','true damage % HP'],['Baxia','anti-heal'],['Dyrroth','burst armor shred']],
+ Esmeralda:[['Dyrroth','burst & anti-shield'],['Karrie','true damage'],['Baxia','anti-heal']],
+ Uranus:[['Karrie','true damage'],['Dyrroth','burst'],['Baxia','anti-heal']],
+ Carmilla:[['Valentina','salin ult Carmilla, war jadi seimbang'],['Diggie','ult purify lepas dari rantai ult Carmilla'],['Faramis','bangkitkan tim yang tertarik ult Carmilla']],
+ Belerick:[['Valentina','salin ult taunt Belerick, masuk terakhir untuk menyelamatkan tim'],['Karrie','true damage % HP'],['Dyrroth','kurangi armor']],
+ Lolita:[['Valentina','salin ult Lolita untuk balas engage'],['Diggie','ult purify setelah kena stun'],['Lylia','ult mundur sebelum stun mendarat']],
+ Tigreal:[['Valentina','salin ult Tigreal untuk balas combo'],['Diggie','anti-CC'],['Valir','dorong & slow']],
+ Atlas:[['Valentina','salin ult Atlas, combo balik ke mereka'],['Diggie','anti-CC'],['Valir','dorong & slow']],
+ Khufra:[['Diggie','anti-CC']],
+ Aldous:[['Valir','kite & slow'],['Kaja','suppress']],
+ Alice:[['Baxia','anti-heal'],['Valir','kite & slow']],
+ Kagura:[['Saber','lock ult'],['Hayabusa','dive cepat'],['Gusion','burst']],
+ Odette:[['Valentina','salin ult Odette'],['Kaja','batalkan ult'],['Franco','hook batalkan ult'],['Chou','tendang keluar ult']],
+ Estes:[['Baxia','anti-heal'],['Natalia','dive backline']],
+ Rafaela:[['Baxia','anti-heal'],['Saber','lock ult']],
+ Natalia:[['Chou','CC saat dia muncul'],['Diggie','selamatkan target']],
+ Diggie:[['Baxia','anti-heal untuk carry'],['Natalia','bunuh sebelum ult']]
+};
+
+/* ---------- synergy ---------- */
+const AOE=new Set(['Odette','Pharsa','Vale','Yve','Aurora','Cecilion','Kadita','Vexana','Lylia','Luo Yi',"Chang'e",'Valentina','Novaria','Zhask','Gord']);
+const ENG=new Set(['Tigreal','Atlas','Lolita','Khufra','Franco','Johnson','Chou','Kaja','Grock','Gatotkaca','Marcel','Minotaur','Ruby','Edith','Fredrinn','Barats','Gloo','Hylos','Akai','Carmilla','Chip','Belerick']);
+const HEALSUP=new Set(['Estes','Floryn','Rafaela','Angela','Kalea']);
+const PEEL=new Set(['Angela','Mathilda','Diggie']);
+function synergy(a,b){
+  if(ENG.has(a.name)&&AOE.has(b.name))return `${a.name} kumpulkan musuh, ${b.name} habisi dengan ult area`;
+  if(a.name==='Johnson'&&(has(b,'Mage')||has(b,'Assassin')))return `${b.name} ikut naik mobil Johnson untuk ambush`;
+  if(PEEL.has(a.name)&&(has(b,'Marksman')||has(b,'Assassin')))return `${a.name} melindungi dan menempel ke ${b.name}`;
+  if(HEALSUP.has(a.name)&&(has(b,'Tank')||has(b,'Fighter')))return `${a.name} menambah sustain ${b.name} di depan`;
+  if(ENG.has(a.name)&&tr(b.name).includes('b'))return `${a.name} buka engage, ${b.name} langsung follow-up burst`;
+  if(ENG.has(a.name)&&has(b,'Fighter')&&tr(b.name).includes('m'))return `${a.name} kunci musuh, ${b.name} masuk menyusul`;
+  if(HEALSUP.has(a.name)&&has(b,'Marksman'))return `${a.name} menjaga sustain ${b.name} saat war`;
+  if((has(a,'Tank')||a.role==='Support')&&a.lanes.includes('R')&&has(b,'Marksman')&&!PEEL.has(a.name)&&!HEALSUP.has(a.name))return `${a.name} jadi tameng depan untuk ${b.name}`;
+  if(AOE.has(a.name)&&AOE.has(b.name))return null;
+  if(has(a,'Mage')&&tr(a.name).includes('s')&&ENG.has(b.name))return null;
+  return null;
+}
+
+/* ---------- modes & sequence ---------- */
+const MODES={
+ epic:{label:'Ranked Epic',sub:'6 ban',note:'Ranked Epic: semua tim ban 3 hero serentak, lalu pick 1-2-2-2-2-1.'},
+ legend:{label:'Ranked Legend',sub:'8 ban',note:'Ranked Legend: semua tim ban 4 hero serentak, lalu pick 1-2-2-2-2-1.'},
+ mythic:{label:'Ranked Mythic+',sub:'10 ban, 2 sesi',note:'Ranked Mythic ke atas: ban serentak 3 per tim, lalu sesi ban kedua 2 per tim. Setelah 10 ban selesai baru pick 1-2-2-2-2-1.'},
+ mpl:{label:'Turnamen',sub:'format MPL',note:'Turnamen: ban satu per satu bergantian dan langsung terlihat, pick diselingi fase ban kedua.'}
+};
+const isRanked=m=>m!=='mpl';
+const other=t=>t==='B'?'R':'B';
+const SIDE={B:'First pick',R:'Second pick'};
+function buildSeq(mode,me){
+  const en=other(me);let g=0;
+  const rb=n=>{g++;const o=[];for(let i=0;i<n;i++)o.push({t:me,k:'ban',g});for(let i=0;i<n;i++)o.push({t:en,k:'ban',g,rev:true});return o};
+  const ab=(n,first)=>{g++;const o=[];for(let i=0;i<n*2;i++)o.push({t:i%2?other(first):first,k:'ban',g});return o};
+  const P=s=>{g++;return s.split('').map(c=>({t:c,k:'pick',g}))};
+  if(mode==='epic')return rb(3).concat(P('BRRBBRRBBR'));
+  if(mode==='legend')return rb(4).concat(P('BRRBBRRBBR'));
+  if(mode==='mythic')return rb(3).concat(rb(2),P('BRRBBRRBBR'));
+  return ab(3,'B').concat(P('BRRBBR'),ab(2,'R'),P('RBBR'));
+}
+
+/* ---------- state ---------- */
+const SAMPLE={mode:'mythic',me:'B',names:{B:'Tim Biru',R:'Tim Merah'},
+  steps:['Hirara','Aulus','Eudora','Belerick','Hirara',null,'Estes','Gloo','Lukas','Masha','Obsidia','Ling','Valir'],
+  lanes:{10:'G',11:'J',12:'M'},custom:[],sample:true};
+let state;
+try{state=JSON.parse(localStorage.getItem('mlbb-draft-v4'))}catch(e){}
+if(!state||!Array.isArray(state.steps))state=JSON.parse(JSON.stringify(SAMPLE));
+if(!MODES[state.mode])state.mode='mythic';
+if(state.me!=='B'&&state.me!=='R')state.me='B';
+state.lanes=state.lanes||{};
+let SEQ=buildSeq(state.mode,state.me);
+const filt={q:'',role:'Semua',lane:'Semua'};
+let timerOn=false,timeLeft=30,tick=null;
+
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const save=()=>{try{localStorage.setItem('mlbb-draft-v4',JSON.stringify(state))}catch(e){}};
+const allHeroes=()=>BASE.concat(state.custom||[]);
+const heroBy=n=>allHeroes().find(h=>h.name===n)||{name:n,role:'Lainnya',lanes:[]};
+const initials=n=>{if(!n)return'✕';const p=n.replace(/[^A-Za-z0-9' .-]/g,'').split(/[\s.-]+/).filter(Boolean);return(p.length>1?p[0][0]+p[1][0]:n.slice(0,2)).toUpperCase()};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mono=(h,cls='')=>!h?`<div class="mono ghost ${cls}"></div>`:`<div class="mono ${cls}" style="--rc:var(--r-${ROLE_ID[h.role]||'other'})">${esc(initials(h.name))}</div>`;
+const tr=n=>TRAITS[n]||'';
+const has=(h,r)=>(h.roles||[h.role]).includes(r);
+const roleTxt=h=>(h.roles||[h.role]).join(' / ');
+const pbadge=n=>{const p=PATCH[n];if(!p)return'';const sym={b:'▲',n:'▼',a:'∿'}[p[0]];return `<i class="pb ${p[0]}" title="${esc(p[1])}">${sym}</i>`};
+const tbadge=n=>{const m=META[n];return m?`<i class="tier ${m[0]}" title="Tier ${m[0]} · WR ${m[1]}%${m[2]?' · ban '+m[2]+'%':''}">${m[0]}</i>`:''};
+const cur=()=>state.steps.length;
+const done=()=>cur()>=SEQ.length;
+function slotsFor(team,type){const out=[];SEQ.forEach((s,i)=>{if(s.t===team&&s.k===type)out.push(i)});return out}
+function picksOf(team){return slotsFor(team,'pick').filter(i=>i<cur()&&state.steps[i]).map(i=>({h:heroBy(state.steps[i]),lane:state.lanes[i]||null,i}))}
+const heroesOf=team=>picksOf(team).map(p=>p.h);
+const revStart=g=>SEQ.findIndex(s=>s.g===g&&s.rev);
+const isHidden=i=>SEQ[i].rev&&cur()<revStart(SEQ[i].g);
+function statusOf(name){const r=[];SEQ.forEach((s,i)=>{if(i<cur()&&state.steps[i]===name)r.push({...s,i})});return r}
+function canUse(name){
+  if(done())return false;
+  const s=SEQ[cur()],used=statusOf(name);
+  if(!used.length)return true;
+  if(s.k==='ban'&&s.rev)return used.every(u=>u.k==='ban'&&u.g===s.g&&u.t!==s.t);
+  return false;
+}
+function freeLanes(team){const taken=new Set(picksOf(team).map(p=>p.lane));return SLOT_ORDER.filter(l=>!taken.has(l))}
+function curLane(){
+  if(done())return null;const s=SEQ[cur()];if(s.k!=='pick')return null;
+  return freeLanes(s.t).includes(state.sel)?state.sel:null; // null = lane otomatis
+}
+function autoLane(h,team){const free=freeLanes(team);return h.lanes.find(l=>free.includes(l))||free[0]}
+const laneOfPick=(h,team)=>curLane()||autoLane(h,team);
+function countersOf(name){
+  const out=[],seen=new Set([name]);
+  (CTR[name]||[]).forEach(([n,w])=>{if(!seen.has(n)){seen.add(n);out.push({n,w})}});
+  for(const t of tr(name))(BY_TRAIT[t]||[]).forEach(([n,w])=>{if(!seen.has(n)){seen.add(n);out.push({n,w})}});
+  return out;
+}
+const counters=(a,b)=>countersOf(b).find(x=>x.n===a);
+function tipOf(name){const t=tr(name);for(const k of 'UhbtmcpdusI')if(t.includes(k))return TIPS[k];return''}
+const isPhys=h=>['Marksman','Fighter','Assassin'].some(r=>has(h,r));
+const isFront=(h,lane)=>has(h,'Tank')||h.role==='Support'||lane==='R';
+
+/* ---------- lane fit ---------- */
+function laneFit(h,lane){
+  if(!lane||h.role==='Lainnya')return null;
+  if(h.lanes.includes(lane))return null;
+  return {G:'Jarang dipakai di Gold lane, damage late game bisa kurang',M:has(h,'Mage')?'Bukan mage mid umum':'Mid tanpa mage: rotasi & damage magic berkurang',
+   R:'Roam yang tidak tebal, tim kurang inisiator & vision',J:'Clear jungle lebih lambat, objektif bisa telat',E:'Kurang tahan lama untuk duel di EXP lane'}[lane];
+}
+/* ---------- team needs ---------- */
+function teamNeeds(team){
+  const ps=picksOf(team),hs=ps.map(p=>p.h),foe=heroesOf(other(team));
+  const n=[
+    ['Frontline',ps.some(p=>isFront(p.h,p.lane))],
+    ['CC / engage',hs.some(h=>ENG.has(h.name)||tr(h.name).includes('c'))],
+    ['Damage magic',hs.some(h=>has(h,'Mage'))],
+    ['Damage fisik',hs.some(isPhys)],
+    ['Carry late',hs.some(h=>h.role==='Marksman')||ps.some(p=>p.lane==='G'&&isPhys(p.h))]
+  ];
+  const healers=foe.filter(h=>tr(h.name).includes('h'));
+  if(healers.length)n.push(['Anti-heal',hs.some(h=>h.name==='Baxia'||h.name==='Karrie')]);
+  return {list:n,healers};
+}
+
+/* ---------- scoring ---------- */
+function metaBonus(h,why,forBan){
+  let s=0;const m=META[h.name],p=PATCH[h.name];
+  if(m){
+    if(forBan&&m[2]>=50){s+=3;why.push(['meta',`Ban rate ${m[2]}%, paling sering di-ban`])}
+    else if(forBan&&m[2]>=30){s+=2;why.push(['meta',`Ban rate ${m[2]}%`])}
+    const t=m[0]==='S'?2:1;s+=forBan?t*0.75:t;why.push(['meta',`Tier ${m[0]} · win rate ${m[1]}%`]);
+  }
+  if(p){if(p[0]==='b'){s+=.6;why.push(['meta',p[1]])}else if(p[0]==='n'){s-=.6;why.push(['neg',p[1]])}}
+  return s;
+}
+function pickScore(h,team,lane){
+  const mine=picksOf(team),foe=heroesOf(other(team));
+  let s=0;const why=[];
+  foe.forEach(e=>{const c=counters(h.name,e.name);if(c){s+=3.5;why.push(['ctr','Counter '+e.name+': '+c.w])}});
+  foe.forEach(e=>{const c=counters(e.name,h.name);if(c){s-=2.5;why.push(['neg','Di-counter '+e.name+' ('+c.w+')'])}});
+  if(lane){if(h.lanes.includes(lane)){s+=3}else{s-=3;why.push(['neg','Jarang di '+LANE_FULL[lane]])}}
+  mine.forEach(m=>{const r=synergy(m.h,h)||synergy(h,m.h);if(r){s+=1.5;why.push(['syn','Sinergi: '+r])}});
+  const front=mine.some(p=>isFront(p.h,p.lane));
+  if(!front&&mine.length>=2&&isFront(h,lane)){s+=1.5;why.push(['','Tim butuh frontliner'])}
+  if(mine.length>=2&&!mine.some(p=>has(p.h,'Mage'))&&has(h,'Mage')){s+=1.5;why.push(['','Tambah damage magic'])}
+  if(mine.length>=2&&!mine.some(p=>isPhys(p.h))&&isPhys(h)){s+=1;why.push(['','Tambah damage fisik'])}
+  // only punish a true duplicate (single-role hero of a role the team already has)
+  const same=mine.filter(p=>p.h.role===h.role).length;
+  if(same>=1&&['Marksman','Mage','Support'].includes(h.role)&&h.roles.length===1){s-=1.5*same;why.push(['neg','Sudah ada '+h.role])}
+  s+=metaBonus(h,why,false);
+  return{s,why};
+}
+function banScore(h,team){
+  const foe=other(team),mine=heroesOf(team),foeH=heroesOf(foe);
+  let s=0;const why=[];
+  mine.forEach(m=>{const c=counters(h.name,m.name);if(c){s+=3.5;why.push(['ctr','Mengancam '+m.name+' kita ('+c.w+')'])}});
+  if(foeH.length){const p=pickScore(h,foe,null);s+=p.s*0.4}
+  const t=tr(h.name);
+  if(t.includes('m')&&t.includes('b')){s+=1;why.push(['','Dash + burst, sulit dihadapi di ranked'])}
+  s+=metaBonus(h,why,true);
+  return{s,why};
+}
+
+/* ---------- render: settings & turn ---------- */
+function renderSettings(){
+  $('modes').innerHTML='<span class="label">Mode</span>'+Object.entries(MODES).map(([k,m])=>`<button class="mode" data-m="${k}" aria-pressed="${state.mode===k}">${m.label}<small>${m.sub}</small></button>`).join('');
+  $('sides').innerHTML='<span class="label">Kamu di</span>'+['B','R'].map(t=>`<button class="mode ${t}" data-s="${t}" aria-pressed="${state.me===t}">${SIDE[t]}<small>${esc(state.names[t])}</small></button>`).join('');
+  $('modeNote').textContent=MODES[state.mode].note+(isRanked(state.mode)?' Ban lawan tersembunyi; isi ban tim kamu dulu, lalu ban lawan setelah terungkap.':'');
+}
+function renderTurn(){
+  const c=cur();
+  if(done()){$('phase').textContent='Draft selesai';$('turnText').innerHTML='<span class="done-msg">Semua hero terkunci</span>';$('turnHint').textContent=''}
+  else{const s=SEQ[c];
+    const gs=[...new Set(SEQ.filter(x=>x.k===s.k).map(x=>x.g))];
+    $('phase').textContent=`${s.k==='ban'?'Sesi ban':'Fase pick'}${gs.length>1?' '+(gs.indexOf(s.g)+1):''} · langkah ${c+1} dari ${SEQ.length}`;
+    let hint='';
+    if(s.k==='ban'&&isRanked(state.mode)){
+      const left=SEQ.filter((x,i)=>i>=c&&x.g===s.g&&!!x.rev===!!s.rev).length;
+      hint=!s.rev?`Ban serentak. Pilih ${left} ban lagi; ban lawan tetap tersembunyi. Kotak ✕ = tidak ban.`
+                 :`Ban lawan terungkap. Masukkan ${left} hero yang mereka ban (boleh sama dengan ban kalian). Pakai kotak ✕ untuk ban kosong.`;
+    }else if(s.k==='ban')hint='Pakai kotak ✕ kalau tidak ada ban.';
+    else{const pn=slotsFor(s.t,'pick').indexOf(c)+1;hint=`Pick ke-${pn}. ${curLane()?'Lane dikunci: '+LANE_FULL[curLane()]+'. Klik slotnya lagi untuk kembali ke otomatis.':'Lane otomatis: hero langsung masuk ke lane yang cocok dan masih kosong. Klik slot di panel tim kalau mau mengunci lane.'}${s.t!==state.me?' Masukkan hero yang dipilih lawan.':''}`}
+    $('turnText').innerHTML=s.k==='ban'&&s.rev?`Ban lawan · <span class="who ${s.t}">${esc(state.names[s.t])}</span>`
+      :`Giliran <span class="who ${s.t}">${esc(state.names[s.t])}</span> · ${s.k==='ban'?'Ban':'Pick'+(curLane()?' '+LANES[curLane()]:'')}`;
+    $('turnHint').textContent=hint;}
+  $('strip').style.setProperty('--n',SEQ.length);
+  $('strip').innerHTML=SEQ.map((s,i)=>{const n=state.steps[i],has=i<c;
+    const gap=i>0&&SEQ[i-1].g!==s.g?'gap':'';const hid=isHidden(i)&&s.t!==state.me;
+    return `<div class="cell ${s.t} ${s.k} ${has?'done':''} ${i===c?'now':''} ${gap}" title="${esc(state.names[s.t])} ${s.k}${has?': '+esc(n||'tidak ban'):''}">${has?esc(initials(n)):(hid?'?':(s.k==='ban'?'B':'P'))}</div>`}).join('');
+  $('undo').disabled=!c;
+  $('sampleBanner').hidden=!state.sample;
+}
+
+/* ---------- render: teams ---------- */
+function renderTeam(team){
+  const c=cur(),el=$('team'+team);
+  const banIdx=slotsFor(team,'ban');
+  const ps=picksOf(team);
+  const s=done()?null:SEQ[c];
+  const myPickTurn=s&&s.k==='pick'&&s.t===team;
+  const sel=myPickTurn?curLane():null;
+  const hiddenBans=banIdx.some(i=>isHidden(i)&&team!==state.me);
+  const bansShown=banIdx.filter(i=>i<c).map(i=>state.steps[i]||'tidak ban');
+  let h=`<div class="thead"><span class="fp">${SIDE[team]}</span><div class="tline"><input class="tname" id="name${team}" value="${esc(state.names[team])}" aria-label="Nama tim" maxlength="24">${team===state.me?'<span class="you">Tim kamu</span>':''}</div></div>`;
+  h+=`<div><div class="label">Ban</div><div class="bans">`+banIdx.map(i=>{
+    if(isHidden(i)&&team!==state.me)return `<div class="bslot hid" title="Tersembunyi">?</div>`;
+    const has=i<c,n=state.steps[i];
+    return `<div class="bslot ${has&&n?'filled':''} ${has&&!n?'skip':''} ${i===c?'now':''}" title="${has?esc(n||'Tidak ban'):''}">${has?esc(initials(n)):''}</div>`}).join('')+
+    `</div><div class="bnames">${hiddenBans?'Tersembunyi sampai sesi ban selesai':(bansShown.length?esc(bansShown.join(', ')):'&nbsp;')}</div></div>`;
+  h+=`<div><div class="label" style="margin-bottom:6px">Pick per lane</div><div class="picks">`+SLOT_ORDER.map(l=>{
+    const p=ps.find(x=>x.lane===l);
+    const lab=`<div class="plane">${LANES[l]}<small>${l==='J'||l==='R'?'&nbsp;':'lane'}</small></div>`;
+    if(p){const fit=laneFit(p.h,l);
+      return `<div class="pslot">${lab}${mono(p.h)}<div style="min-width:0"><div class="pname"><span class="t">${esc(p.h.name)}</span>${pbadge(p.h.name)}${tbadge(p.h.name)}</div><div class="prole ${fit?'warn':''}">${fit?esc(fit):roleTxt(p.h)}</div></div></div>`}
+    if(myPickTurn)return `<button class="pslot ${sel===l?'sel':''}" data-lane="${l}" aria-pressed="${sel===l}">${lab}${mono(null)}<div class="pname empty">${sel===l?'Dikunci: pick masuk sini':'Kosong · klik untuk kunci'}</div></button>`;
+    return `<div class="pslot">${lab}${mono(null)}<div class="pname empty">Kosong</div></div>`;
+  }).join('')+`</div></div>`;
+  // analysis
+  const notes=[];
+  if(ps.length){
+    const hs=ps.map(p=>p.h);
+    if(hs.filter(x=>x.role==='Marksman').length>=2)notes.push(['warn','Dua marksman, frontline bisa tipis']);
+    if(hs.filter(x=>x.role==='Assassin').length>=2&&!hs.some(x=>has(x,'Tank')))notes.push(['warn','Banyak assassin tanpa tank']);
+    ps.forEach(p=>{const f=laneFit(p.h,p.lane);if(f)notes.push(['warn',`${p.h.name} di ${LANE_FULL[p.lane]}: ${f.toLowerCase()}`])});
+    const foe=heroesOf(other(team));
+    hs.forEach(m=>foe.forEach(e=>{const cc=counters(e.name,m.name);if(cc)notes.push(['warn',`${m.name} di-counter ${e.name} (${cc.w})`])}));
+  }
+  const nd=teamNeeds(team);
+  if(nd.healers.length)notes.push([nd.list.find(x=>x[0]==='Anti-heal')[1]?'good':'warn',`Lawan punya sustain (${nd.healers.map(x=>x.name).join(', ')}): siapkan item anti-heal`]);
+  if(ps.length===5&&nd.list.every(x=>x[1]))notes.push(['good','Kebutuhan dasar tim lengkap']);
+  if(!ps.length)notes.push(['','Belum ada hero dipilih']);
+  const syn=[];for(const a of ps)for(const b of ps){if(a!==b){const r=synergy(a.h,b.h);if(r)syn.push(r)}}
+  const pct=Math.min(100,Math.round(syn.length/4*100));
+  const synTxt=syn.length>=4?'Kuat':syn.length>=2?'Cukup':syn.length===1?'Lemah':'Belum ada';
+  h+=`<div class="comp"><div class="label">Kebutuhan tim</div><div class="needs">${nd.list.map(([n,ok])=>`<span class="lchip ${ok?'ok':(ps.length>=3?'miss':'')}">${n}</span>`).join('')}</div>
+    <ul class="notes">${notes.map(([cl,t])=>`<li class="${cl}">${esc(t)}</li>`).join('')}</ul>
+    ${ps.length>=2?`<div class="label">Sinergi tim</div><div class="syn-meter"><div class="syn-bar"><span style="width:${pct}%"></span></div><span>${synTxt}</span></div><ul class="notes">${syn.length?syn.slice(0,4).map(r=>`<li class="good">${esc(r)}</li>`).join(''):'<li class="warn">Belum ada kombinasi. Cari engager + ult area, atau support yang menempel ke carry.</li>'}</ul>`:''}</div>`;
+  el.innerHTML=h;
+  el.classList.toggle('active',!!s&&s.t===team);
+  const inp=$('name'+team);
+  inp.addEventListener('change',()=>{state.names[team]=inp.value.trim()||(team==='B'?'Tim Biru':'Tim Merah');save();renderAll()});
+  el.querySelectorAll('button.pslot').forEach(b=>b.onclick=()=>{state.sel=state.sel===b.dataset.lane?null:b.dataset.lane;save();renderAll()});
+}
+
+/* ---------- render: recommendations ---------- */
+function recCard(x,i,ctx){
+  const g=t=>x.why.filter(w=>w[0]===t).map(w=>w[1]);
+  const ctr=g('ctr').map(t=>t.replace(/^Counter /,'').replace(/^Mengancam /,''));
+  const syn=g('syn').map(t=>t.replace(/^Sinergi: /,''));
+  const neg=g('neg'),meta=g('meta'),need=g('');
+  const rows=[];
+  if(ctx.ban){
+    rows.push(['Ancaman',ctr.length?ctr.join(' · '):'',ctr.length?'ctr':'none']);
+  }else{
+    if(ctx.foe)rows.push(['Counter',ctr.length?ctr.join(' · '):'Tidak meng-counter pick lawan',ctr.length?'ctr':'none']);
+    if(ctx.mine)rows.push(['Sinergi',syn.length?syn.join(' · '):'Tidak ada kombinasi khusus dengan tim',syn.length?'syn':'none']);
+    if(need.length)rows.push(['Tim',need.join(' · '),'']);
+  }
+  if(neg.length)rows.push(['Risiko',neg.join(' · '),'neg']);
+  if(meta.length)rows.push(['Meta',meta.join(' · '),'meta']);
+  if(ctx.ban&&need.length)rows.push(['Catatan',need.join(' · '),'']);
+  const shown=rows.filter(r=>r[1]);
+  const flags=(ctr.length&&!ctx.ban?'<span class="flag">Counter</span>':'')+(syn.length?'<span class="flag syn">Sinergi</span>':'');
+  return `<button class="rec ${i<3?'top':''}" data-n="${esc(x.h.name)}" ${x.lane?`data-lane="${x.lane}"`:''}><div class="rhead">${mono(x.h)}<div style="min-width:0"><div class="rn"><span class="rank">#${i+1}</span>${esc(x.h.name)}${pbadge(x.h.name)}${tbadge(x.h.name)}${flags}</div><div class="rr">${ctx.pick&&x.lane?`<span class="lanepill">→ ${LANES[x.lane]}</span> `:''}${roleTxt(x.h)} · ${x.h.lanes.map(l=>LANES[l]).join(' / ')}</div></div><span class="score">${x.s>0?'+':''}${x.s.toFixed(1)}</span></div>${shown.length?`<dl class="rrows">${shown.map(r=>`<dt>${r[0]}</dt><dd class="${r[2]}">${esc(r[1])}</dd>`).join('')}</dl>`:''}</button>`;
+}
+let recFilter='all',recAll=false;
+function renderRecs(){
+  const el=$('recs'),c=cur();
+  if(done()){el.innerHTML=`<div class="p-title">Draft selesai</div><div class="p-sub">Cek kebutuhan tim, counter, dan sinergi. Tekan Batal langkah untuk mencoba pilihan lain.</div>`;return}
+  const s=SEQ[c];
+  if(s.k==='ban'&&s.rev){
+    el.innerHTML=`<div class="p-head"><div class="p-title">Ban lawan terungkap</div></div><div class="p-sub">Pilih hero yang di-ban <b>${esc(state.names[s.t])}</b> dari daftar di bawah. Kalau mereka ban hero yang sama dengan kalian, hero itu tetap bisa dipilih. Pakai kotak <b>✕ Tidak ban</b> kalau slot ban mereka kosong.</div>`;return}
+  const lane=s.k==='pick'?curLane():null;
+  const free=s.k==='pick'?freeLanes(s.t):[];
+  const fits=h=>lane?h.lanes.includes(lane):h.lanes.some(l=>free.includes(l));
+  const laneTxt=lane?LANE_FULL[lane]:'semua lane kosong ('+free.map(l=>LANES[l]).join(', ')+')';
+  const pool=allHeroes().filter(h=>canUse(h.name)&&h.role!=='Lainnya'&&(s.k==='ban'||fits(h)));
+  const scored=pool.map(h=>{
+    if(s.k==='ban')return{h,...banScore(h,s.t)};
+    const ls=lane?[lane]:h.lanes.filter(l=>free.includes(l));
+    let best=null;ls.forEach(l=>{const r=pickScore(h,s.t,l);if(!best||r.s>best.s)best={...r,lane:l}});
+    return{h,...best};
+  });
+  scored.sort((a,b)=>b.s-a.s||a.h.name.localeCompare(b.h.name));
+  const enemyTurn=s.t!==state.me;
+  const foe=heroesOf(other(s.t)),mine=heroesOf(s.t);
+  let top=scored.slice(0,8),extra='';
+  if(s.k==='pick'&&!lane&&free.length>1){
+    const per=[];free.forEach(l=>{const b=scored.find(x=>x.lane===l&&!per.includes(x));if(b)per.push(b)});
+    top=per.concat(scored.filter(x=>!per.includes(x))).slice(0,Math.max(8,per.length));
+  }
+  if(s.k==='pick'&&foe.length){
+    // make sure every enemy hero that is not yet answered has a counter in the list
+    const unanswered=foe.filter(e=>!mine.some(m=>counters(m.name,e.name)));
+    unanswered.forEach(e=>{
+      if(top.some(x=>counters(x.h.name,e.name)))return;
+      const cand=scored.find(x=>counters(x.h.name,e.name));
+      if(!cand)return;
+      cand.forced=e.name;
+      let k=top.length-1;while(k>=0&&(top[k].forced||foe.some(f=>counters(top[k].h.name,f.name))))k--;
+      if(k>=0)top[k]=cand;else if(top.length<10)top.push(cand);
+    });
+    top.sort((a,b)=>b.s-a.s);
+    // threat summary
+    const rows=foe.map(e=>{
+      const ans=mine.filter(m=>counters(m.name,e.name));
+      if(ans.length)return `<div class="trow ok"><span class="who">${esc(e.name)}</span><span class="arrow">→</span> sudah dijawab ${esc(ans.map(a=>a.name).join(', '))}</div>`;
+      const cs=countersOf(e.name).filter(c=>canUse(c.n)).slice(0,4);
+      const tip=tipOf(e.name);
+      return `<div class="trow"><span class="who">${esc(e.name)}${pbadge(e.name)}</span><span class="arrow">→ counter:</span>${cs.length?cs.map(c=>`<button class="tchip" data-n="${esc(c.n)}" title="${esc(c.w)}${fits(heroBy(c.n))?'':' · lane-nya sudah terisi'}">${esc(c.n)}${fits(heroBy(c.n))?'':' *'}</button>`).join(''):'<span class="p-sub">semua counter sudah diban/dipick</span>'}${tip?`<span class="tipx">${esc(tip)}</span>`:''}</div>`}).join('');
+    const avoid=scored.filter(x=>META[x.h.name]).map(x=>({x,by:foe.find(e=>counters(e.name,x.h.name))})).filter(o=>o.by).slice(0,3);
+    extra=`<div class="threats"><div class="label">${enemyTurn?'Hero kalian yang perlu dijawab lawan':'Hero lawan yang perlu dijawab'}</div>${rows}
+      ${avoid.length?`<div class="avoid">Hindari: ${avoid.map(o=>esc(o.x.h.name)+' (di-counter '+esc(o.by.name)+')').join(', ')}</div>`:''}
+      <div class="p-sub">Klik nama counter untuk langsung memilihnya. Tanda * = lane hero itu di timmu sudah terisi.</div></div>`;
+  }
+  const noPicks=!heroesOf('B').length&&!heroesOf('R').length;
+  const title=s.k==='ban'?'Rekomendasi ban':enemyTurn?'Prediksi pick lawan':'Rekomendasi pick';
+  const sub=s.k==='ban'?'Hero dengan ban rate & tier tertinggi, plus yang mengancam pick kalian.'
+    :noPicks?`Belum ada pick, jadi saran diambil dari hero yang paling kuat di meta untuk ${laneTxt}.`
+    :`Untuk ${laneTxt}. Prioritas: counter ke lawan, sinergi dengan tim, kebutuhan tim, lalu kekuatan meta. Lane tiap hero diisi otomatis.`;
+  const ctx={ban:s.k==='ban',foe:foe.length>0,mine:mine.length>0,pick:s.k==='pick'};
+  const topSet=new Set(top.map(x=>x.h.name));
+  let rest=scored.filter(x=>!topSet.has(x.h.name));
+  const pass=x=>recFilter==='all'||(recFilter==='ctr'&&x.why.some(w=>w[0]==='ctr'))||(recFilter==='syn'&&x.why.some(w=>w[0]==='syn'))||(recFilter==='meta'&&!!META[x.h.name]);
+  const topF=top.filter(pass);let restF=rest.filter(pass);
+  const cap=s.k==='ban'&&!recAll?24:Infinity;const hidden=Math.max(0,restF.length-cap);restF=restF.slice(0,cap);
+  const fchips=[['all','Semua'],['ctr',s.k==='ban'?'Mengancam tim':'Ada counter'],['syn','Ada sinergi'],['meta','Tier S/A']].filter(f=>!(s.k==='ban'&&f[0]==='syn'));
+  let n=0;const cards=arr=>arr.map(x=>recCard(x,n++,ctx)).join('');
+  el.innerHTML=`<div class="p-head"><div class="p-title">${title} · <span class="${s.t}">${esc(state.names[s.t])}</span>${lane?' · '+LANE_FULL[lane]:''}</div><div class="p-sub">${sub}</div></div>
+   ${extra}
+   <div class="rbar"><div class="chips" id="recChips">${fchips.map(([v,l])=>`<button class="chip" data-rf="${v}" aria-pressed="${recFilter===v}">${l}</button>`).join('')}</div><span class="p-sub">${scored.length} hero cocok</span></div>
+   ${s.k==='pick'?`<div class="chips" id="laneRec"><span class="label" style="align-self:center;margin-right:4px">Lane</span><button class="chip" data-rl="" aria-pressed="${!lane}">Semua lane kosong</button>${free.map(l=>`<button class="chip" data-rl="${l}" aria-pressed="${lane===l}">${LANES[l]}</button>`).join('')}</div>`:''}
+   ${topF.length?`<div class="rec-group"><h3>Pilihan terbaik</h3><div class="rec-list">${cards(topF)}</div></div>`:''}
+   ${restF.length?`<div class="rec-group"><h3>Pilihan lain</h3><div class="rec-list">${cards(restF)}</div></div>`:''}
+   ${!topF.length&&!restF.length?'<div class="p-sub">Tidak ada hero yang cocok dengan filter ini.</div>':''}
+   ${hidden?`<button class="btn more" id="recMore">Tampilkan ${hidden} hero lagi</button>`:''}
+   <div class="p-sub">Klik kartu untuk langsung memilih. Skor hanya panduan, bukan jaminan; skill pemain tetap paling menentukan.</div>`;
+}
+
+/* ---------- render: pool ---------- */
+/* ---------- voice / fuzzy hero search ---------- */
+const norm=t=>t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+const ALIAS={yss:'Yi Sun-shin',yisunsin:'Yi Sun-shin',popol:'Popol and Kupa',kupa:'Popol and Kupa',popoldankupa:'Popol and Kupa',xborg:'X.Borg',eksborg:'X.Borg',change:"Chang'e",cange:"Chang'e",lapu:'Lapu-Lapu',gatot:'Gatotkaca',bene:'Benedetta',esme:'Esmeralda',yuzong:'Yu Zhong',yujong:'Yu Zhong',karmila:'Carmilla',kamila:'Carmilla',beleric:'Belerick',belerik:'Belerick',valen:'Valentina',tamuz:'Thamuz',tamus:'Thamuz',fredin:'Fredrinn',kufra:'Khufra',minsitar:'Minsitthar',mino:'Minotaur',haya:'Hayabusa',guin:'Guinevere',dirot:'Dyrroth',dirrot:'Dyrroth',harit:'Harith',marsel:'Marcel',odet:'Odette',farmis:'Faramis',franko:'Franco',tigrel:'Tigreal',tigril:'Tigreal',grok:'Grock',kaja:'Kaja',kaya:'Kaja',lansalot:'Lancelot',lanselot:'Lancelot',lance:'Lancelot',gusen:'Gusion',gusiyon:'Gusion',fani:'Fanny',leomor:'Leomord',luoi:'Luo Yi',luoyi:'Luo Yi',paqito:'Paquito',pakito:'Paquito',fovius:'Phoveus',foveus:'Phoveus',silvana:'Silvanna',terisla:'Terizla',wanwan:'Wanwan',wan:'Wanwan',bruno:'Bruno',klaud:'Claude',klod:'Claude',kerri:'Karrie',kari:'Karrie',iksia:'Ixia',obsidian:'Obsidia',zetiyan:'Zetian',suyu:'Suyou',cici:'Cici',sisi:'Cici',hirarah:'Hirara',aulos:'Aulus',julien:'Julian',lukas:'Lukas',natalya:'Natalia',natalia:'Natalia',helkurt:'Helcurt',hanso:'Hanzo',angel:'Angela',estes:'Estes',ester:'Estes',floren:'Floryn',florin:'Floryn',kalia:'Kalea',diggy:'Diggie',digi:'Diggie',mathilda:'Mathilda',matilda:'Mathilda',joi:'Joy',nolen:'Nolan',edit:'Edith',edith:'Edith',barat:'Barats',baxya:'Baxia',baksia:'Baxia',jonson:'Johnson',atlas:'Atlas',akai:'Akai',uranus:'Uranus',hilda:'Hilda',ruby:'Ruby',rubi:'Ruby',chou:'Chou',cou:'Chou',ciu:'Chou',argus:'Argus',masa:'Masha',masya:'Masha',arlot:'Arlott',sora:'Sora',yin:'Yin',kimi:'Kimmy',lesli:'Lesley',lesly:'Lesley',grenjer:'Granger',grenger:'Granger',beatriks:'Beatrix',melisa:'Melissa',layla:'Layla',laila:'Layla',miya:'Miya',moskow:'Moskov',hanabi:'Hanabi',irithel:'Irithel',iritel:'Irithel',bodi:'Brody',brodi:'Brody',natan:'Natan',nathan:'Natan',kagura:'Kagura',pasa:'Pharsa',farsa:'Pharsa',lunoks:'Lunox',kadita:'Kadita',valir:'Valir',fale:'Vale',ive:'Yve',lilia:'Lylia',lylia:'Lylia',sesilion:'Cecilion',xavier:'Xavier',saviyer:'Xavier',novaria:'Novaria',zuksin:'Zhuxin',zusin:'Zhuxin',aurora:'Aurora',eudora:'Eudora',yudora:'Eudora',harli:'Harley',zask:'Zhask',zas:'Zhask',sayklops:'Cyclops',siklop:'Cyclops',faramis:'Faramis',karina:'Karina',saber:'Saber',seber:'Saber',alfa:'Alpha',alpha:'Alpha',alukard:'Alucard',balmon:'Balmond',bein:'Bane',fraya:'Freya',sun:'Sun',jawhed:'Jawhead',martis:'Martis',badang:'Badang',khaled:'Khaleed',kaled:'Khaleed',xborks:'X.Borg',dyrroth:'Dyrroth',aldus:'Aldous',ling:'Ling',lin:'Ling',benedeta:'Benedetta',yuzhong:'Yu Zhong',aamon:'Aamon',amon:'Aamon',selina:'Selena',chip:'Chip',cip:'Chip'};
+const STOP=new Set(['pick','pik','ban','ben','pilih','cari','dan','terus','trus','sama','lawan','kita','hero','yang','itu','ini','lalu','dengan','tim','biru','merah','musuh','aku','saya','mau','tolong','ke','di','sih','deh','dong','ya','oke','ok','nah','koma']);
+function lev(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let p=Array(n+1).fill(0).map((_,j)=>j);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
+function bestHero(tok){
+  if(tok.length<2)return null;
+  if(ALIAS[tok])return {h:heroBy(ALIAS[tok]),sc:1};
+  let best=null;
+  for(const h of allHeroes()){const k=norm(h.name);
+    let sc=k===tok?1:k.startsWith(tok)&&tok.length>=4?0.93:1-lev(tok,k)/Math.max(tok.length,k.length);
+    if(!best||sc>best.sc)best={h,sc}}
+  for(const[a,n] of Object.entries(ALIAS)){if(a.length<4)continue;const sc=1-lev(tok,a)/Math.max(tok.length,a.length);if(sc>best.sc)best={h:heroBy(n),sc}}
+  return best&&best.sc>=(tok.length<=4?0.75:0.68)?best:null;
+}
+// split a phrase into hero names (tries 3-, 2- then 1-word chunks)
+function parseHeroes(text){
+  const words=text.toLowerCase().replace(/[,.;]/g,' ').split(/\s+/).filter(w=>w&&!STOP.has(norm(w)));
+  const out=[];let i=0;
+  while(i<words.length){let hit=null,len=1;
+    for(const L of [3,2,1]){if(i+L>words.length)continue;const r=bestHero(norm(words.slice(i,i+L).join('')));if(r&&(!hit||r.sc>hit.sc+(L>len?0:0.001))&&(L===1||r.sc>=0.8)){hit=r;len=L;if(r.sc===1)break}}
+    if(hit&&!out.some(o=>o.name===hit.h.name))out.push(hit.h);
+    i+=hit?len:1;}
+  return out;
+}
+let voiceHits=[];
+function renderVoice(){
+  const bar=$('voiceBar');
+  const q=filt.q;
+  voiceHits=q&&(q.includes(' ')||!allHeroes().some(h=>h.name.toLowerCase().includes(q.toLowerCase())))?parseHeroes(q):[];
+  if(!voiceHits.length){bar.hidden=true;return}
+  const usable=voiceHits.filter(h=>canUse(h.name));
+  bar.hidden=false;
+  bar.innerHTML=`<span class="label">Terdeteksi</span>${voiceHits.map(h=>`<button class="vh" data-n="${esc(h.name)}" ${canUse(h.name)?'':'disabled'}>${mono(h)}${esc(h.name)}</button>`).join('')}${usable.length>1?`<button class="btn" id="vAll">Pilih berurutan (${usable.length})</button>`:''}`;
+}
+$('voiceBar').onclick=e=>{
+  if(e.target.closest('#vAll')){const list=voiceHits.filter(h=>canUse(h.name)).map(h=>h.name);list.forEach(n=>{if(canUse(n))act(n)});clearSearch();return}
+  const b=e.target.closest('.vh');if(b&&!b.disabled){voiceHits=voiceHits.filter(h=>h.name!==b.dataset.n);act(b.dataset.n);
+    const rest=voiceHits.map(h=>h.name).join(' ');$('search').value=rest;filt.q=rest;renderPool()}
+};
+function clearSearch(){$('search').value='';filt.q='';renderPool()}
+
+// microphone via Web Speech API (if the browser and page allow it)
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null,listening=false;
+function voiceMsg(t){const m=$('voiceMsg');m.hidden=!t;m.textContent=t||''}
+const KEYBOARD_TIP='Tips: pakai tombol mikrofon di keyboard HP (Gboard / keyboard iPhone) lalu ucapkan nama hero ke kolom cari. Bisa beberapa sekaligus, mis. "Hirara Aulus Eudora".';
+$('mic').onclick=()=>{
+  if(!SR){voiceMsg('Browser ini tidak mendukung pengenalan suara langsung. '+KEYBOARD_TIP);$('search').focus();return}
+  if(listening){try{rec.stop()}catch(e){}return}
+  try{
+    rec=new SR();rec.lang='id-ID';rec.interimResults=true;rec.maxAlternatives=1;rec.continuous=false;
+    rec.onstart=()=>{listening=true;$('mic').classList.add('live');$('mic').setAttribute('aria-pressed','true');$('micTxt').textContent='Mendengar…';voiceMsg('Ucapkan nama hero, mis. "Valentina" atau "Hirara Aulus Eudora".')};
+    rec.onresult=e=>{let t='';for(let i=e.resultIndex;i<e.results.length;i++)t+=e.results[i][0].transcript;$('search').value=t;filt.q=t.trim();renderPool()};
+    rec.onerror=e=>{const why=e.error==='not-allowed'||e.error==='service-not-allowed'?'Mikrofon tidak diizinkan di halaman ini.':e.error==='no-speech'?'Tidak ada suara terdengar, coba lagi.':e.error==='network'?'Pengenalan suara butuh koneksi internet.':'Pengenalan suara gagal ('+e.error+').';voiceMsg(why+(e.error==='no-speech'?'':' '+KEYBOARD_TIP))};
+    rec.onend=()=>{listening=false;$('mic').classList.remove('live');$('mic').setAttribute('aria-pressed','false');$('micTxt').textContent='Suara';if(!$('voiceMsg').textContent.startsWith('Mikrofon')&&!$('voiceMsg').textContent.includes('gagal')&&!$('voiceMsg').textContent.startsWith('Tidak'))voiceMsg('')};
+    rec.start();
+  }catch(err){voiceMsg('Pengenalan suara tidak bisa dimulai di sini. '+KEYBOARD_TIP)}
+};
+
+function renderPool(){
+  renderVoice();
+  const q=filt.q.toLowerCase(),c=cur();
+  const banTurn=!done()&&SEQ[c].k==='ban';
+  const list=allHeroes().filter(h=>(filt.role==='Semua'||(filt.role==='Meta'?!!META[h.name]:filt.role==='Patch'?!!PATCH[h.name]:has(h,filt.role)))&&(filt.lane==='Semua'||h.lanes.includes(filt.lane))&&(!q||h.name.toLowerCase().includes(q)||voiceHits.some(v=>v.name===h.name)));
+  const noBan=banTurn&&!q?`<button class="hero noban" data-none="1" title="Tandai slot ban ini kosong"><div class="x">✕</div><span class="hn">Tidak ban</span><span class="hl">slot kosong</span></button>`:'';
+  $('grid').innerHTML=noBan+(list.length?list.map(h=>{
+    const used=statusOf(h.name).filter(u=>!(isHidden(u.i)&&u.t!==state.me));
+    const u=used[used.length-1];
+    const tag=u?`<span class="tag ${u.t}">${u.k==='ban'?'Diban':'Dipick'} ${u.t==='B'?'Biru':'Merah'}</span>`:`<span class="hl">${h.lanes.map(l=>LANES[l]).join(' / ')||h.role}</span>`;
+    return `<button class="hero" data-n="${esc(h.name)}" ${canUse(h.name)?'':'disabled'} title="${esc(h.name)} · ${roleTxt(h)}${PATCH[h.name]?' · '+esc(PATCH[h.name][1]):''}">${META[h.name]?`<span class="corner-l">${tbadge(h.name)}</span>`:''}${PATCH[h.name]?`<span class="corner-r">${pbadge(h.name)}</span>`:''}${mono(h)}<span class="hn">${esc(h.name)}</span>${tag}</button>`}).join('')
+    :`<div class="empty-pool">Tidak ada hero yang cocok. Tekan Enter untuk menambahkan "${esc(filt.q)}" sebagai hero baru.</div>`);
+}
+function chips(id,items,key){
+  $(id).innerHTML=items.map(([v,l])=>`<button class="chip" data-v="${v}" aria-pressed="${filt[key]===v}">${l}</button>`).join('');
+  $(id).onclick=e=>{const b=e.target.closest('.chip');if(!b)return;filt[key]=b.dataset.v;chips(id,items,key);renderPool()};
+}
+
+/* ---------- actions ---------- */
+function act(name){
+  if(done())return;
+  const s=SEQ[cur()];
+  if(name===null&&s.k!=='ban')return;
+  if(name!==null&&!canUse(name))return;
+  if(s.k==='pick')state.lanes[cur()]=laneOfPick(heroBy(name),s.t);
+  state.steps.push(name);state.sel=null;recFilter='all';recAll=false;state.sample=false;save();
+  $('search').value='';filt.q='';
+  resetTimer();renderAll();
+}
+function renderAll(){renderSettings();renderTurn();renderTeam('B');renderTeam('R');renderRecs();renderPool()}
+
+let pending=null;
+function confirmThen(key,btn,fn){
+  if(state.steps.length&&!state.sample&&pending!==key){pending=key;const sm=btn.querySelector('small');if(sm)sm.textContent='Klik lagi: draft direset';setTimeout(()=>{if(pending===key){pending=null;renderSettings()}},2500);return}
+  pending=null;fn();
+}
+function fresh(){state.steps=[];state.lanes={};state.sel=null;state.sample=false}
+$('modes').onclick=e=>{const b=e.target.closest('.mode');if(!b||b.dataset.m===state.mode)return;
+  confirmThen('m'+b.dataset.m,b,()=>{state.mode=b.dataset.m;fresh();SEQ=buildSeq(state.mode,state.me);save();resetTimer();renderAll()})};
+$('sides').onclick=e=>{const b=e.target.closest('.mode');if(!b||b.dataset.s===state.me)return;
+  const apply=()=>{state.me=b.dataset.s;SEQ=buildSeq(state.mode,state.me);if(isRanked(state.mode))fresh();save();resetTimer();renderAll()};
+  if(isRanked(state.mode))confirmThen('s'+b.dataset.s,b,apply);else apply()};
+
+function resetTimer(){timeLeft=30;updTimer()}
+function updTimer(){const t=$('timer');t.hidden=!timerOn||done();t.textContent=timeLeft>0?timeLeft:'Habis';t.classList.toggle('low',timeLeft<=10)}
+$('timerBtn').onclick=()=>{timerOn=!timerOn;$('timerBtn').textContent='Timer 30 dtk: '+(timerOn?'nyala':'mati');$('timerBtn').classList.toggle('on',timerOn);$('timerBtn').setAttribute('aria-pressed',timerOn);
+  clearInterval(tick);resetTimer();if(timerOn)tick=setInterval(()=>{if(timeLeft>0){timeLeft--;updTimer()}},1000)};
+
+$('grid').onclick=e=>{const b=e.target.closest('.hero');if(!b||b.disabled)return;if(b.dataset.none)act(null);else act(b.dataset.n)};
+$('recs').onclick=e=>{
+  const f=e.target.closest('[data-rf]');if(f){recFilter=f.dataset.rf;renderRecs();return}
+  if(e.target.closest('#recMore')){recAll=true;renderRecs();return}
+  const rl=e.target.closest('[data-rl]');if(rl){state.sel=rl.dataset.rl||null;save();renderAll();return}
+  const b=e.target.closest('.rec,.tchip');if(!b||b.disabled)return;
+  if(b.dataset.lane&&!curLane())state.sel=b.dataset.lane;
+  act(b.dataset.n)};
+$('search').addEventListener('input',e=>{filt.q=e.target.value.trim();renderPool()});
+$('search').addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;e.preventDefault();
+  const vu=voiceHits.filter(h=>canUse(h.name));
+  if(vu.length){act(vu[0].name);const rest=vu.slice(1).map(h=>h.name).join(' ');$('search').value=rest;filt.q=rest;renderPool();return}
+  const first=$('grid').querySelector('.hero:not(:disabled):not(.noban)');
+  if(first){act(first.dataset.n);return}
+  const n=filt.q;if(!n||allHeroes().some(h=>h.name.toLowerCase()===n.toLowerCase()))return;
+  state.custom=(state.custom||[]).concat({name:n,role:'Lainnya',lanes:[]});act(n);
+});
+$('undo').onclick=()=>{state.steps.pop();delete state.lanes[state.steps.length];state.sel=null;state.sample=false;save();resetTimer();renderAll()};
+let confirmReset=false;
+$('reset').onclick=()=>{
+  if(state.steps.length&&!state.sample&&!confirmReset){confirmReset=true;$('reset').textContent='Yakin? Tekan lagi';setTimeout(()=>{confirmReset=false;$('reset').textContent='Draft baru'},2500);return}
+  confirmReset=false;$('reset').textContent='Draft baru';
+  fresh();save();resetTimer();renderAll()};
+
+chips('roleChips',[['Semua','Semua'],['Meta','Tier S/A'],['Patch','Kena patch']].concat(ROLES.map(r=>[r,r])),'role');
+chips('laneChips',[['Semua','Semua lane']].concat(SLOT_ORDER.map(l=>[l,LANES[l]])),'lane');
+renderAll();
+</script>
+
+</body>
+</html>
