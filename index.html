@@ -500,6 +500,66 @@ function tipOf(name){const t=tr(name);for(const k of 'UhbtmcpdusI')if(t.includes
 const isPhys=h=>['Marksman','Fighter','Assassin'].some(r=>has(h,r));
 const isFront=(h,lane)=>has(h,'Tank')||h.role==='Support'||lane==='R';
 
+/* ---------- komposisi hero (dari video "Biar Draft Pick lo rada ngotak dikit" – HEROISGOD) ----------
+   1) Komposisi peran seimbang: 1 MM, 1 Fighter, 1 Assassin, 1 Mage, 1 Tank
+   2) Komposisi defense: minimal 1 hero tebal; Roam & EXP sebaiknya yang tebal
+   3) Komposisi damage: jangan kebanyakan magic / fisik, musuh tinggal beli satu jenis defense
+   4) Komposisi waktu: campur hero kuat Early (0–5 mnt), Mid (5–12 mnt), Late (12 mnt+) */
+// hero non-mage yang damage utamanya magic
+const MAGIC_DMG=new Set(['Karina','Gusion','Harley','Selena','Kadita','Joy','Julian','Aamon','Guinevere','Silvanna','Phoveus','Esmeralda','Alice','Kimmy','Harith','Faramis','Kalea']);
+const dmgType=h=>(has(h,'Mage')||MAGIC_DMG.has(h.name))?'M':'P';
+// pembawa damage = bukan tank/support murni
+const isDealer=h=>!((h.role==='Tank'||h.role==='Support')&&!has(h,'Mage')&&!has(h,'Marksman')&&!has(h,'Fighter'));
+// hero tebal: punya sifat tebal, atau fighter yang punya sustain
+const isTough=h=>tr(h.name).includes('t')||(has(h,'Fighter')&&tr(h.name).includes('h'));
+// waktu kuat (perkiraan umum per role, dengan pengecualian yang dikenal)
+const SPIKE_EARLY=new Set(['Saber','Natalia','Karina','Helcurt','Eudora','Hayabusa','Lancelot','Bane','Jawhead','Kadita','Chou','Paquito','Badang','Balmond','Roger','Fanny','Ling','Hirara','Nolan','Joy','Aamon','Gusion','Harley','Selena','Yin','Julian','Suyou','Benedetta','Martis','Freya','Sun','Alpha','Leomord','Lapu-Lapu','Masha','Aulus','Gord','Zhask','Vexana','Chang\'e','Kimmy','Brody','Natan','Clint','Harith']);
+const SPIKE_LATE=new Set(['Aldous','Lunox','Alucard','Uranus','Cecilion','Esmeralda','Thamuz','Yu Zhong','Hanzo','Valentina','Arlott','X.Borg','Cici','Lukas','Sora','Dyrroth','Terizla']);
+function spikeOf(h){
+  if(!isDealer(h))return null;
+  if(SPIKE_EARLY.has(h.name))return 'E';
+  if(SPIKE_LATE.has(h.name))return 'L';
+  if(h.role==='Marksman')return h.name==='Brody'||h.name==='Natan'||h.name==='Clint'?'E':'L';
+  return 'M';
+}
+const SPIKE_TXT={E:'Early',M:'Mid',L:'Late'};
+const CLASSIC=['Marksman','Fighter','Assassin','Mage','Tank'];
+function compOf(ps){
+  const hs=ps.map(p=>p.h),dealers=hs.filter(isDealer);
+  const mag=dealers.filter(h=>dmgType(h)==='M').length,phy=dealers.length-mag;
+  const sp={E:0,M:0,L:0};hs.forEach(h=>{const k=spikeOf(h);if(k)sp[k]++});
+  const tough=hs.filter(isTough);
+  const roles={};CLASSIC.forEach(r=>roles[r]=hs.some(h=>has(h,r)||(r==='Tank'&&h.role==='Support'&&isTough(h))));
+  return{mag,phy,sp,tough,roles};
+}
+// skor tambahan dari prinsip komposisi
+function compScore(h,mine,lane,why){
+  let s=0;const c=compOf(mine);
+  // 2) defense
+  if(mine.length>=2&&!c.tough.length&&isTough(h)){s+=2;why.push(['','Tim belum ada hero tebal (minimal 1)'])}
+  if((lane==='R'||lane==='E')&&!isTough(h)&&h.role!=='Support'){s-=1;why.push(['neg',`${LANE_FULL[lane]} sebaiknya hero tebal`])}
+  else if((lane==='R'||lane==='E')&&isTough(h)&&mine.length){s+=0.5}
+  // 3) damage
+  if(isDealer(h)){
+    const t=dmgType(h);
+    if(t==='M'&&c.mag>=2&&c.phy===0){s-=2;why.push(['neg','Tim sudah kebanyakan magic, musuh tinggal beli Magic Defense'])}
+    else if(t==='P'&&c.phy>=3&&c.mag===0){s-=2;why.push(['neg','Tim sudah kebanyakan fisik, musuh tinggal beli Physical Defense'])}
+    else if(t==='M'&&c.phy>=2&&c.mag===0){s+=1.5;why.push(['','Seimbangkan damage: tim belum punya damage magic'])}
+    else if(t==='P'&&c.mag>=2&&c.phy===0){s+=1.5;why.push(['','Seimbangkan damage: tim belum punya damage fisik'])}
+  }
+  // 4) waktu
+  const k=spikeOf(h);
+  if(k&&mine.length>=2){
+    const dealers=mine.filter(p=>isDealer(p.h)).length;
+    if(c.sp[k]>=2&&dealers>=2){s-=1;why.push(['neg',`Sudah ${c.sp[k]} hero kuat di ${SPIKE_TXT[k]} game`])}
+    else if(c.sp[k]===0&&dealers>=2){s+=0.8;why.push(['',`Tambah hero kuat di ${SPIKE_TXT[k]} game`])}
+  }
+  // 1) peran klasik
+  const miss=CLASSIC.filter(r=>!c.roles[r]);
+  if(mine.length>=2&&miss.some(r=>has(h,r))&&miss.length<=3){s+=0.6}
+  return s;
+}
+
 /* ---------- lane fit ---------- */
 function laneFit(h,lane){
   if(!lane||h.role==='Lainnya')return null;
@@ -513,8 +573,9 @@ function teamNeeds(team){
   const n=[
     ['Frontline',ps.some(p=>isFront(p.h,p.lane))],
     ['CC / engage',hs.some(h=>ENG.has(h.name)||tr(h.name).includes('c'))],
-    ['Damage magic',hs.some(h=>has(h,'Mage'))],
-    ['Damage fisik',hs.some(isPhys)],
+    ['Hero tebal',hs.some(isTough)],
+    ['Damage magic',hs.some(h=>isDealer(h)&&dmgType(h)==='M')],
+    ['Damage fisik',hs.some(h=>isDealer(h)&&dmgType(h)==='P')],
     ['Carry late',hs.some(h=>h.role==='Marksman')||ps.some(p=>p.lane==='G'&&isPhys(p.h))]
   ];
   const healers=foe.filter(h=>tr(h.name).includes('h'));
@@ -543,8 +604,7 @@ function pickScore(h,team,lane){
   mine.forEach(m=>{const r=antiSynergy(m.h,h)||antiSynergy(h,m.h);if(r){s-=1.5;why.push(['neg','Kurang cocok: '+r])}});
   const front=mine.some(p=>isFront(p.h,p.lane));
   if(!front&&mine.length>=2&&isFront(h,lane)){s+=1.5;why.push(['','Tim butuh frontliner'])}
-  if(mine.length>=2&&!mine.some(p=>has(p.h,'Mage'))&&has(h,'Mage')){s+=1.5;why.push(['','Tambah damage magic'])}
-  if(mine.length>=2&&!mine.some(p=>isPhys(p.h))&&isPhys(h)){s+=1;why.push(['','Tambah damage fisik'])}
+  s+=compScore(h,mine,lane,why);
   // only punish a true duplicate (single-role hero of a role the team already has)
   const same=mine.filter(p=>p.h.role===h.role).length;
   if(same>=1&&['Marksman','Mage','Support'].includes(h.role)&&h.roles.length===1){s-=1.5*same;why.push(['neg','Sudah ada '+h.role])}
@@ -625,6 +685,16 @@ function renderTeam(team){
     ps.forEach(p=>{const f=laneFit(p.h,p.lane);if(f)notes.push(['warn',`${p.h.name} di ${LANE_FULL[p.lane]}: ${f.toLowerCase()}`])});
     const foe=heroesOf(other(team));
     hs.forEach(m=>foe.forEach(e=>{const cc=counters(e.name,m.name);if(cc)notes.push(['warn',`${m.name} di-counter ${e.name} (${cc.w})`])}));
+    // komposisi (video HEROISGOD)
+    const c=compOf(ps);
+    if(ps.length>=3&&!c.tough.length)notes.push(['warn','Komposisi lembek: belum ada hero tebal, minimal 1']);
+    ps.forEach(p=>{if((p.lane==='R'||p.lane==='E')&&!isTough(p.h)&&p.h.role!=='Support')notes.push(['warn',`${p.h.name} di ${LANE_FULL[p.lane]} kurang tebal`])});
+    if(c.mag+c.phy>=2)notes.push([c.mag>=3&&!c.phy||c.phy>=4&&!c.mag?'warn':'',`Damage: ${c.phy} fisik · ${c.mag} magic`+(c.mag>=3&&!c.phy?' (kebanyakan magic, musuh tinggal beli Magic Defense)':c.phy>=4&&!c.mag?' (kebanyakan fisik, musuh tinggal beli Physical Defense)':'')]);
+    const spTot=c.sp.E+c.sp.M+c.sp.L;
+    if(spTot>=2){const miss=['E','M','L'].filter(k=>!c.sp[k]).map(k=>SPIKE_TXT[k]);
+      notes.push([miss.length&&ps.length>=4?'warn':'',`Waktu kuat (perkiraan): Early ${c.sp.E} · Mid ${c.sp.M} · Late ${c.sp.L}`+(miss.length&&ps.length>=4?` (belum ada hero kuat di ${miss.join(' & ')} game)`:'')])}
+    const missR=CLASSIC.filter(r=>!c.roles[r]);
+    if(ps.length===5&&missR.length)notes.push(['','Komposisi klasik 1 MM · 1 Fighter · 1 Assassin · 1 Mage · 1 Tank, kurang: '+missR.join(', ')]);
   }
   const nd=teamNeeds(team);
   if(nd.healers.length)notes.push([nd.list.find(x=>x[0]==='Anti-heal')[1]?'good':'warn',`Lawan punya sustain (${nd.healers.map(x=>x.name).join(', ')}): siapkan item anti-heal`]);
