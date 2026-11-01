@@ -254,7 +254,7 @@ button.pslot:hover{border-color:var(--turn)}
     <span><i class="pb n">▼</i> Nerf</span>
     <span><i class="pb a">∿</i> Disesuaikan / rework</span>
     <span><i class="tier S">S</i><i class="tier">A</i> Tier meta</span>
-    <span class="src">Skill hero dicek s.d. patch 2.2.16a (termasuk revamp Kaja, Masha, Bruno, Aulus, Eudora, Freya, Sora) · Patch 2.2.16 (16 Sep 2026) &amp; 2.2.16a (14 Okt 2026) · tier Season 42, data 16 Okt 2026 dari <a href="https://mlbbhub.com/tier-list" target="_blank" rel="noopener">MLBBHub</a></span>
+    <span class="src">Skill hero dicek s.d. patch 2.2.16a (termasuk revamp Kaja, Masha, Bruno, Aulus, Eudora, Freya, Sora) · Patch 2.2.16 (16 Sep 2026) &amp; 2.2.16a (14 Okt 2026) · tier Season 42, data 1 Nov 2026 (patch live masih 2.2.16a) dari <a href="https://mlbbhub.com/tier-list" target="_blank" rel="noopener">MLBBHub</a></span>
   </div>
 
   <div class="banner" id="sampleBanner" hidden>Ini draft contoh. Tekan <b>Draft baru</b> untuk mulai dari nol, atau lanjutkan dari giliran sekarang.</div>
@@ -299,7 +299,7 @@ const ROLES=['Tank','Fighter','Assassin','Mage','Marksman','Support'];
 const ROLE_ID={Tank:'tank',Fighter:'fighter',Assassin:'assassin',Mage:'mage',Marksman:'marksman',Support:'support',Lainnya:'other'};
 const BASE=RAW.split(';').map(s=>{const[n,r,l]=s.split('|');const rs=r.split('/');return{name:n,role:rs[0],roles:rs,lanes:l.split('')}}).sort((a,b)=>a.name.localeCompare(b.name));
 
-/* ---------- patch & meta (sumber: MLBBHub / MLBBDex, Okt 2026) ---------- */
+/* ---------- patch & meta (sumber: MLBBHub / MLBBDex, tier & ban rate 1 Nov 2026) ---------- */
 const PATCH={
  Aulus:['n','Nerf 2.2.16a: sustain dikurangi (sempat buff di 2.2.16)'],
  Hirara:['n','Nerf 2.2.16a: skill kebal lebih jarang bisa dipakai'],
@@ -315,8 +315,10 @@ const PATCH={
 PATCH.Kaja=['b','Buff 2.2.16. Revamp 2.1.95: ult kini lasso area (bukan suppress satu target), skill 2 terbang melewati dinding'];
 PATCH.Marcel=['a','Disesuaikan 2.2.16: bisa menggagalkan skill target-lokasi (mis. ult Eudora). Ult = zona stasis, musuh di dalam kebal damage'];
 // [tier, winrate %, banrate %]
-const META={Masha:['S',60.3,33],Aulus:['S',58.5,43.6],Marcel:['S',58.2,33.1],Rafaela:['S',57.9,19.1],Argus:['S',56.0],Minotaur:['S',55.0,7.9],Khufra:['S',54.7],'Popol and Kupa':['S',54.7],Gloo:['S',54.1,38.2],Floryn:['S',54.1],Valir:['S',53.9],Carmilla:['S',53.8,15.1],Obsidia:['S',53.7,20.9],
- Lolita:['A',54.0],Diggie:['A',53.6],Bruno:['A',53.3],Gord:['A',52.9],Lukas:['A',52.8,38],Hirara:['A',52.7,68.7],Estes:['A',52.7,43.2],Benedetta:['A',52.7],Edith:['A',52.6],Irithel:['A',52.5],Ling:['A',52.4],Sun:['A',52.4,21.4],Zhask:['A',52.3],Hanabi:['A',52.2],Atlas:['A',52.2],Belerick:['A',52.1,55.9],Barats:['A',51.9],Kagura:['A',51.8],Minsitthar:['A',51.6],Kadita:['A',51.3],Eudora:['A',51.2,58.8],Zetian:['A',51.0]};
+const META={Masha:['S',61.2,38.7],Marcel:['S',57.7,38.8],Argus:['S',56.6],Rafaela:['S',55.0,15.4],Khufra:['S',54.7],'Popol and Kupa':['S',54.7],Gloo:['S',54.6,41.3],Valir:['S',54.3],Floryn:['S',54.1],Minotaur:['S',53.8],Aulus:['S',53.7,40.3],Carmilla:['S',53.6,20.0],Obsidia:['S',53.4,42.1],Sun:['S',53.1,23.9],
+ Diggie:['A',54.0],Bruno:['A',53.6],Lolita:['A',53.5],Estes:['A',52.8,46.2],Gord:['A',52.8],Ling:['A',52.7],Lukas:['A',52.6,37.2],Hanabi:['A',52.6],Irithel:['A',52.6],Zhask:['A',52.6],Atlas:['A',52.4],Edith:['A',52.3],Benedetta:['A',52.2],Belerick:['A',51.9,57.2],Kagura:['A',51.8],Barats:['A',51.8],Minsitthar:['A',51.8],Kadita:['A',51.6],Silvanna:['A',51.4],Guinevere:['A',51.3],Saber:['A',51.1,24.6],Hilda:['A',51.1],Zetian:['A',51.0],Alice:['A',50.9],Eudora:['A',50.6,52.9],
+ /* tier B tapi ban rate tinggi: tetap dicatat untuk skor ban & kartu Meta */
+ Hirara:['B',50.0,68.3],Paquito:['B',50.2,23.6]};
 
 /* ---------- traits → counters (kit dicek s.d. patch 2.2.16a) ----------
    m = banyak dash/lincah, h = sustain/heal, t = tebal, c = punya CC, u = ult channel bisa dibatalkan,
@@ -475,7 +477,8 @@ const tr=n=>TRAITS[n]||'';
 const has=(h,r)=>(h.roles||[h.role]).includes(r);
 const roleTxt=h=>(h.roles||[h.role]).join(' / ');
 const pbadge=n=>{const p=PATCH[n];if(!p)return'';const sym={b:'▲',n:'▼',a:'∿'}[p[0]];return `<i class="pb ${p[0]}" title="${esc(p[1])}">${sym}</i>`};
-const tbadge=n=>{const m=META[n];return m?`<i class="tier ${m[0]}" title="Tier ${m[0]} · WR ${m[1]}%${m[2]?' · ban '+m[2]+'%':''}">${m[0]}</i>`:''};
+const isTier=n=>!!(META[n]&&'SA'.includes(META[n][0]));
+const tbadge=n=>{const m=META[n];return m&&isTier(n)?`<i class="tier ${m[0]}" title="Tier ${m[0]} · WR ${m[1]}%${m[2]?' · ban '+m[2]+'%':''}">${m[0]}</i>`:''};
 const cur=()=>state.steps.length;
 const done=()=>cur()>=SEQ.length;
 function slotsFor(team,type){const out=[];SEQ.forEach((s,i)=>{if(s.t===team&&s.k===type)out.push(i)});return out}
@@ -651,7 +654,7 @@ function metaBonus(h,why,forBan){
   if(m){
     if(forBan&&m[2]>=50){s+=3;why.push(['meta',`Ban rate ${m[2]}%, paling sering di-ban`])}
     else if(forBan&&m[2]>=30){s+=2;why.push(['meta',`Ban rate ${m[2]}%`])}
-    const t=m[0]==='S'?2:1;s+=forBan?t*0.75:t;why.push(['meta',`Tier ${m[0]} · win rate ${m[1]}%`]);
+    const t=m[0]==='S'?2:m[0]==='A'?1:0;s+=forBan?t*0.75:t;why.push(['meta',`Tier ${m[0]} · win rate ${m[1]}%`]);
   }
   if(p){if(p[0]==='b'){s+=.6;why.push(['meta',p[1]])}else if(p[0]==='n'){s-=.6;why.push(['neg',p[1]])}}
   const mp=MPL[h.name];
@@ -883,7 +886,7 @@ function renderRecs(){
       const cs=countersOf(e.name).filter(c=>canUse(c.n)).slice(0,4);
       const tip=tipOf(e.name);
       return `<div class="trow"><span class="who">${esc(e.name)}${pbadge(e.name)}</span><span class="arrow">→</span>${cs.length?cs.map(c=>`<button class="tchip" data-n="${esc(c.n)}" title="${esc(c.w)}${fits(heroBy(c.n))?'':' · lane-nya sudah terisi'}">${esc(c.n)}${fits(heroBy(c.n))?'':' *'}</button>`).join(''):'<span class="p-sub">semua counter sudah diban/dipick</span>'}</div>`}).join('');
-    const avoid=scored.filter(x=>META[x.h.name]).map(x=>({x,by:foe.find(e=>counters(e.name,x.h.name))})).filter(o=>o.by).slice(0,3);
+    const avoid=scored.filter(x=>isTier(x.h.name)).map(x=>({x,by:foe.find(e=>counters(e.name,x.h.name))})).filter(o=>o.by).slice(0,3);
     extra=`<div class="threats"><div class="label">${enemyTurn?'Hero kalian':'Hero lawan'}</div>${rows}
       ${avoid.length?`<div class="avoid">Hindari: ${avoid.map(o=>esc(o.x.h.name)).join(', ')}</div>`:''}</div>`;
   }
@@ -893,7 +896,7 @@ function renderRecs(){
   const ctx={ban:s.k==='ban',foe:foe.length>0,mine:mine.length>0,pick:s.k==='pick',team:s.t};
   const topSet=new Set(top.map(x=>x.h.name));
   let rest=scored.filter(x=>!topSet.has(x.h.name));
-  const pass=x=>recFilter==='all'||(recFilter==='ctr'&&x.why.some(w=>w[0]==='ctr'))||(recFilter==='syn'&&x.why.some(w=>w[0]==='syn'))||(recFilter==='meta'&&!!META[x.h.name]);
+  const pass=x=>recFilter==='all'||(recFilter==='ctr'&&x.why.some(w=>w[0]==='ctr'))||(recFilter==='syn'&&x.why.some(w=>w[0]==='syn'))||(recFilter==='meta'&&isTier(x.h.name));
   const topF=top.filter(pass);let restF=rest.filter(pass);
   const cap=s.k==='ban'&&!recAll?24:Infinity;const hidden=Math.max(0,restF.length-cap);restF=restF.slice(0,cap);
   const fchips=[['all','Semua'],['ctr',s.k==='ban'?'Mengancam tim':'Ada counter'],['syn','Ada sinergi'],['meta','Tier S/A']].filter(f=>!(s.k==='ban'&&f[0]==='syn'));
@@ -962,14 +965,14 @@ function renderPool(){
   const q=filt.q.toLowerCase(),c=cur();
   const banTurn=!done()&&SEQ[c].k==='ban',pickTurn=!done()&&SEQ[c].k==='pick';
   if(!pickTurn)laneAsk=null;
-  const list=allHeroes().filter(h=>(filt.role==='Semua'||(filt.role==='Meta'?!!META[h.name]:filt.role==='Patch'?!!PATCH[h.name]:has(h,filt.role)))&&(filt.lane==='Semua'||h.lanes.includes(filt.lane))&&(!q||h.name.toLowerCase().includes(q)||voiceHits.some(v=>v.name===h.name)));
+  const list=allHeroes().filter(h=>(filt.role==='Semua'||(filt.role==='Meta'?isTier(h.name):filt.role==='Patch'?!!PATCH[h.name]:has(h,filt.role)))&&(filt.lane==='Semua'||h.lanes.includes(filt.lane))&&(!q||h.name.toLowerCase().includes(q)||voiceHits.some(v=>v.name===h.name)));
   const noBan=banTurn&&!q?`<button class="hero noban" data-none="1" title="Tandai slot ban ini kosong"><div class="x">✕</div><span class="hn">Tidak ban</span><span class="hl">slot kosong</span></button>`:'';
   $('grid').innerHTML=noBan+(list.length?list.map(h=>{
     const used=statusOf(h.name).filter(u=>!(isHidden(u.i)&&u.t!==state.me));
     const u=used[used.length-1];
     const tag=u?`<span class="tag ${u.t}">${u.k==='ban'?'Diban':'Dipick'} ${u.t==='B'?'Biru':'Merah'}</span>`:`<span class="hl">${h.lanes.map(l=>LANES[l]).join(' / ')||h.role}</span>`;
     const ask=laneAsk===h.name&&pickTurn?lanePicker(h):'';
-    return `<div class="hcell">${ask}<button class="hero" data-n="${esc(h.name)}" ${canUse(h.name)?'':'disabled'} title="${esc(h.name)} · ${roleTxt(h)}${PATCH[h.name]?' · '+esc(PATCH[h.name][1]):''}">${META[h.name]?`<span class="corner-l">${tbadge(h.name)}</span>`:''}${PATCH[h.name]?`<span class="corner-r">${pbadge(h.name)}</span>`:''}${mono(h)}<span class="hn">${esc(h.name)}</span>${tag}</button></div>`}).join('')
+    return `<div class="hcell">${ask}<button class="hero" data-n="${esc(h.name)}" ${canUse(h.name)?'':'disabled'} title="${esc(h.name)} · ${roleTxt(h)}${PATCH[h.name]?' · '+esc(PATCH[h.name][1]):''}">${isTier(h.name)?`<span class="corner-l">${tbadge(h.name)}</span>`:''}${PATCH[h.name]?`<span class="corner-r">${pbadge(h.name)}</span>`:''}${mono(h)}<span class="hn">${esc(h.name)}</span>${tag}</button></div>`}).join('')
     :`<div class="empty-pool">Tidak ada hero yang cocok. Tekan Enter untuk menambahkan "${esc(filt.q)}" sebagai hero baru.</div>`);
 }
 function chips(id,items,key){
