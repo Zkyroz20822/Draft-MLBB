@@ -116,6 +116,12 @@ h1 small{display:block;font:500 13px/1.3 var(--f-body);letter-spacing:.08em;colo
 .picks{display:flex;flex-direction:column;gap:6px}
 .pslot{display:grid;grid-template-columns:58px 38px minmax(0,1fr);align-items:center;gap:8px;padding:6px 8px;border-radius:7px;background:var(--sunk);border:1px solid transparent;min-height:54px;text-align:left;width:100%}
 button.pslot:hover{border-color:var(--turn)}
+.pslot.movable{cursor:pointer}.pslot.movable .mono{cursor:grab;touch-action:none;user-select:none}
+.pslot.target{cursor:pointer;border:1px dashed var(--turn)}
+.pslot.drop{border:2px solid var(--turn);background:var(--surface)}
+.mvhint{font-weight:400;opacity:.7;text-transform:none;letter-spacing:0}
+.dragghost{position:fixed;left:0;top:0;z-index:99;pointer-events:none;opacity:.9;filter:drop-shadow(0 4px 10px rgba(0,0,0,.35))}
+body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
 .pslot.sel{border:2px solid var(--turn);background:var(--surface);padding:5px 7px}
 .plane{font:800 12.5px/1.05 var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--c)}
 .plane small{display:block;font:500 10.5px var(--f-body);letter-spacing:0;text-transform:none;color:var(--muted);margin-top:2px}
@@ -282,7 +288,7 @@ button.pslot:hover{border-color:var(--turn)}
       <div class="chips" id="roleChips"></div>
       <div class="chips" id="laneChips"></div>
       <div class="grid" id="grid"></div>
-      <div class="hint">Hero belum ada di daftar? Ketik namanya lalu Enter untuk menambahkannya.</div>
+      <div class="hint">Ketik beberapa nama sekaligus (mis. hirara eudora), klik salah satu: yang lain tetap di daftar. Hero belum ada? Ketik namanya lalu Enter.</div>
     </section>
     <section class="team R" id="teamR"></section>
     <section class="panel recs" id="recs"></section>
@@ -770,12 +776,13 @@ function renderTeam(team){
     const has=i<c,n=state.steps[i];
     return `<div class="bslot ${has&&n?'filled':''} ${has&&!n?'skip':''} ${i===c?'now':''}" title="${has?esc(n||'Tidak ban'):''}">${has?esc(initials(n)):''}</div>`}).join('')+
     `</div><div class="bnames">${hiddenBans?'Tersembunyi sampai sesi ban selesai':(bansShown.length?esc(bansShown.join(', ')):'&nbsp;')}</div></div>`;
-  h+=`<div><div class="label" style="margin-bottom:6px">Pick</div><div class="picks">`+SLOT_ORDER.map(l=>{
+  h+=`<div><div class="label" style="margin-bottom:6px">Pick <small class="mvhint">· geser hero ke lane lain</small></div><div class="picks">`+SLOT_ORDER.map(l=>{
     const p=ps.find(x=>x.lane===l);
     const lab=`<div class="plane">${LANES[l]}</div>`;
+    const src=moveSrc&&moveSrc.team===team&&moveSrc.lane===l;
     if(p){const fit=laneFit(p.h,l);
-      return `<div class="pslot">${lab}${mono(p.h)}<div style="min-width:0"><div class="pname"><span class="t">${esc(p.h.name)}</span>${pbadge(p.h.name)}${tbadge(p.h.name)}</div><div class="prole ${fit?'warn':''}">${fit?esc(fit):roleTxt(p.h)}</div></div></div>`}
-    return `<div class="pslot">${lab}${mono(null)}<div class="pname empty">Kosong</div></div>`;
+      return `<div class="pslot movable ${src?'sel':''}" data-team="${team}" data-lane="${l}" title="Geser ke lane lain, atau tap lalu tap lane tujuan">${lab}${mono(p.h)}<div style="min-width:0"><div class="pname"><span class="t">${esc(p.h.name)}</span>${pbadge(p.h.name)}${tbadge(p.h.name)}</div><div class="prole ${fit?'warn':''}">${fit?esc(fit):roleTxt(p.h)}</div></div></div>`}
+    return `<div class="pslot ${moveSrc&&moveSrc.team===team?'target':''}" data-team="${team}" data-lane="${l}">${lab}${mono(null)}<div class="pname empty">Kosong</div></div>`;
   }).join('')+`</div></div>`;
   // analysis
   const notes=[];
@@ -949,11 +956,50 @@ function renderVoice(){
 }
 $('voiceBar').onclick=e=>{
   if(e.target.closest('#vAll')){const list=voiceHits.filter(h=>canUse(h.name)).map(h=>h.name);list.forEach(n=>{if(canUse(n))act(n)});clearSearch();return}
-  const b=e.target.closest('.vh');if(b&&!b.disabled){voiceHits=voiceHits.filter(h=>h.name!==b.dataset.n);act(b.dataset.n);
-    const rest=voiceHits.map(h=>h.name).join(' ');$('search').value=rest;filt.q=rest;renderPool()}
+  const b=e.target.closest('.vh');if(b&&!b.disabled)act(b.dataset.n);
 };
 function clearSearch(){$('search').value='';filt.q='';renderPool()}
 
+
+let moveSrc=null,drag=null,noClick=false;
+function moveLane(team,from,to){
+  if(from===to){moveSrc=null;renderTeam(team);return}
+  const ps=picksOf(team),a=ps.find(p=>p.lane===from),b=ps.find(p=>p.lane===to);
+  if(!a){moveSrc=null;return}
+  state.lanes[a.i]=to;if(b)state.lanes[b.i]=from; // lane tujuan terisi: kedua hero bertukar
+  moveSrc=null;state.sample=false;save();renderAll();
+}
+function endDrag(){if(drag&&drag.ghost)drag.ghost.remove();document.querySelectorAll('.pslot.drop').forEach(x=>x.classList.remove('drop'));document.body.classList.remove('dragging');drag=null}
+document.addEventListener('pointerdown',e=>{
+  const ic=e.target.closest('.pslot.movable .mono');if(!ic||(e.pointerType==='mouse'&&e.button!==0))return;
+  const sl=ic.closest('.pslot');drag={team:sl.dataset.team,lane:sl.dataset.lane,x:e.clientX,y:e.clientY,on:false,ghost:null,html:ic.outerHTML};
+});
+document.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  if(!drag.on){if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<6)return;
+    drag.on=true;const g=document.createElement('div');g.className='dragghost';g.innerHTML=drag.html;document.body.appendChild(g);drag.ghost=g;document.body.classList.add('dragging');moveSrc=null}
+  drag.ghost.style.transform=`translate(${e.clientX-22}px,${e.clientY-22}px)`;
+  document.querySelectorAll('.pslot.drop').forEach(x=>x.classList.remove('drop'));
+  const t=document.elementFromPoint(e.clientX,e.clientY),sl=t&&t.closest('.pslot[data-lane]');
+  if(sl&&sl.dataset.team===drag.team&&sl.dataset.lane!==drag.lane)sl.classList.add('drop');
+  e.preventDefault();
+},{passive:false});
+document.addEventListener('pointerup',e=>{
+  if(!drag)return;const d=drag;
+  if(!d.on){drag=null;return}
+  const t=document.elementFromPoint(e.clientX,e.clientY),sl=t&&t.closest('.pslot[data-lane]');
+  endDrag();noClick=true;setTimeout(()=>{noClick=false},0);
+  if(sl&&sl.dataset.team===d.team)moveLane(d.team,d.lane,sl.dataset.lane);
+});
+document.addEventListener('pointercancel',endDrag);
+// tap hero lalu tap lane tujuan (alternatif geser, cocok di layar sentuh)
+document.addEventListener('click',e=>{
+  if(noClick)return;
+  const sl=e.target.closest('.team .pslot[data-lane]');if(!sl)return;
+  const team=sl.dataset.team,lane=sl.dataset.lane,filled=sl.classList.contains('movable');
+  if(moveSrc&&moveSrc.team===team){if(moveSrc.lane===lane){moveSrc=null;renderTeam(team)}else moveLane(team,moveSrc.lane,lane);return}
+  if(filled){moveSrc={team,lane};renderTeam(team)}
+});
 
 let laneAsk=null;
 function lanePicker(h){
@@ -987,8 +1033,10 @@ function act(name){
   if(name===null&&s.k!=='ban')return;
   if(name!==null&&!canUse(name))return;
   if(s.k==='pick')state.lanes[cur()]=laneOfPick(heroBy(name),s.t);
-  laneAsk=null;state.steps.push(name);state.sel=null;recFilter='all';recAll=false;state.sample=false;save();
-  $('search').value='';filt.q='';
+  // beberapa nama diketik sekaligus: hanya hero yang dipilih yang hilang dari kolom cari, sisanya tetap
+  const rest=voiceHits.filter(h=>h.name!==name).map(h=>h.name).join(' ');
+  laneAsk=null;moveSrc=null;state.steps.push(name);state.sel=null;recFilter='all';recAll=false;state.sample=false;save();
+  $('search').value=rest;filt.q=rest;
   resetTimer();renderAll();
 }
 function renderAll(){renderSettings();renderTurn();renderTeam('B');renderTeam('R');renderRecs();renderPool()}
@@ -1038,7 +1086,7 @@ document.addEventListener('keydown',e=>{
   const t=e.target,tag=(t&&t.tagName)||'';
   if(t&&(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||t.isContentEditable))return;
   const sb=$('search');
-  if(e.key==='Escape'){if(laneAsk){laneAsk=null;renderPool()}else if(sb.value){clearSearch()}return}
+  if(e.key==='Escape'){if(moveSrc){const t=moveSrc.team;moveSrc=null;renderTeam(t)}else if(laneAsk){laneAsk=null;renderPool()}else if(sb.value){clearSearch()}return}
   if(e.key==='Backspace'){if(sb.value){e.preventDefault();sb.focus();sb.value=sb.value.slice(0,-1);filt.q=sb.value.trim();renderPool()}return}
   if(e.key==='Enter'&&sb.value&&!(t&&(tag==='BUTTON'||tag==='A'))){e.preventDefault();sb.focus();sb.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));return}
   if(e.key.length!==1||!/[\p{L}\p{N} .'\-]/u.test(e.key))return;
@@ -1052,7 +1100,7 @@ $('search').addEventListener('keydown',e=>{
   if(e.key==='Escape'){clearSearch();e.target.blur();return}
   if(e.key!=='Enter')return;e.preventDefault();
   const vu=voiceHits.filter(h=>canUse(h.name));
-  if(vu.length){act(vu[0].name);const rest=vu.slice(1).map(h=>h.name).join(' ');$('search').value=rest;filt.q=rest;renderPool();return}
+  if(vu.length){act(vu[0].name);return}
   const first=$('grid').querySelector('.hero:not(:disabled):not(.noban)');
   if(first){act(first.dataset.n);return}
   const n=filt.q;if(!n||allHeroes().some(h=>h.name.toLowerCase()===n.toLowerCase()))return;
